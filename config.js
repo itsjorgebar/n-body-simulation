@@ -56,10 +56,16 @@ function createScene(canvas)
 
     // Create the sphere
     geometry = new THREE.SphereGeometry(0.8, 20, 20);
-    mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xffffff}));
+    mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
     bodies.push(mesh);
     group.add( mesh );
 
+    // Create the sphere
+    geometry = new THREE.SphereGeometry(0.8, 20, 20);
+    mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x0000ff}));
+    mesh.position.set(3,3,3);
+    bodies.push(mesh);
+    group.add( mesh );
 
      // Add a directional light to show off the object
      let light = new THREE.DirectionalLight( new THREE.Color("rgb(200, 200, 200)"), 1);
