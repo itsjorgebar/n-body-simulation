@@ -1,3 +1,8 @@
+var $ = require('jquery')
+var THREE = require('three')
+var odex = require('odex')
+var OrbitControls = require('three-orbit-controls')(THREE)
+
 let renderer = null, 
 scene = null, 
 camera = null,
@@ -5,13 +10,29 @@ root = null,
 group = null,
 orbitControls = null,
 dragControls= null;
-
 let bodies = [];
 
 let ambientLight = null;
+ 
+var s = new odex.Solver(1);
+var f = function(x, y) {
+    return y;
+}
+console.log(s.solve(f,
+    0,    // initial x value
+    [1],  // initial y values (just one in this example)
+    1))
 
-function run() 
-{
+$(document).ready(
+	function() {
+		let canvas = document.getElementById("webglcanvas");
+		createScene(canvas);
+
+		run();
+	}
+);
+
+function run() {
     requestAnimationFrame(function() { run(); });
     
     // Render the scene
@@ -21,8 +42,7 @@ function run()
     orbitControls.update();
 }
 
-function createScene(canvas) 
-{
+function createScene(canvas) {
     // Create the Three.js renderer and attach it to our canvas
     renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
 
@@ -78,7 +98,7 @@ function createScene(canvas)
     scene.add(light);
 
     // Controls
-    orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+    orbitControls = new OrbitControls(camera, renderer.domElement);
 
     //dragControls = new THREE.DragControls(bodies, camera, renderer.domElement);
 }

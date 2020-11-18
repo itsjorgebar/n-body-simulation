@@ -1,0 +1,29 @@
+{
+  "name": "nbody",
+  "version": "1.0.0",
+  "description": "NBody problem visualization",
+  "main": "config.js",
+  "dependencies": {
+    "jquery": "^3.5.1",
+    "odex": "^2.0.4",
+    "three": "^0.122.0",
+    "three-orbit-controls": "^82.1.0"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0"
+  },
+  "scripts": {
+    "build": "browserify app.js -o bundle.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JorgeBarMza/NBody.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JorgeBarMza/NBody/issues"
+  },
+  "homepage": "https://github.com/JorgeBarMza/NBody#readme"
+}
