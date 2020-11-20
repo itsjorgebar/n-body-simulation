@@ -2,25 +2,26 @@ var $ = require('jquery')
 var THREE = require('three')
 var odex = require('odex')
 var OrbitControls = require('three-orbit-controls')(THREE)
-
 let renderer = null, 
 scene = null, 
 camera = null,
 root = null,
 group = null,
 orbitControls = null,
-dragControls= null;
-let bodies = [];
+dragControls= null,
+ambientLight = null,
+bodies = [],
+solution = [],
+tLastUpdate = null,
+iter = 0,
+simulate = false,
+deltaT = 0.1,
+// Define masses
+mass = [1.2, 8];
+// Define solution offsets.
+off_r = [],
+off_v = [],
 
-let ambientLight = null;
-
-let solution = [];
-let tLastUpdate = null;
-let iter = 0;
-let simulate = false;
-let deltaT = 0.1;
-let timeEnd = 200;
- 
 $(document).ready(
 	function() {
 		let canvas = document.getElementById("webglcanvas");
@@ -30,22 +31,6 @@ $(document).ready(
 	}
 );
 
-//  Physics
-// Define universal gravitation constant
-let G=6.67408e-11 // N-m2/kg2
-
-// Define initial position vectors
-let r1 = [-2, 0, 0];
-let r2 = [2, 0, 0];
-
-// Define initial velocities
-v1=[0,0.5,0] // m/s
-v2=[0,0.5,0] // m/s
-
-let off_r = [];
-let off_v = [];
-let mass = [1.2, 8];
-
 // Returns eqs solutions for body with index a, affected by another body b.
 function body(a, b, y) {
   // vector from a to b.
@@ -54,6 +39,8 @@ function body(a, b, y) {
               y[2 + off_r[a]] - y[2 + off_r[b]]];
 
   let denom = Math.pow(Math.sqrt(r_ab[0]**2 + r_ab[1]**2 + r_ab[2]**2), 3);
+  // Define universal gravitation constant
+  let G = 6.67408e-11;
   let scalar_ab = 1000000000 * -1 * G * mass[b] / denom;
 
   return [
@@ -74,10 +61,12 @@ let TwoBody = (x,y) => {
   ];
 };
 
-function solve() {
-  let s = new odex.Solver(12);
-  s.denseOutput = true;  // request interpolation closure in solution callback
-  sol = s.solve(TwoBody, 0, [...r1,...v1, ...r2, ...v2], timeEnd, 
+// Solves the system of ODEs and stores the result in the solution global var.
+function solve(y0) {
+  let s = new odex.Solver(y0.length);
+  s.denseOutput = true;
+  timeEnd = 200; // seconds.
+  sol = s.solve(TwoBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
       solution.push([time,y]);
@@ -94,17 +83,14 @@ function run() {
     orbitControls.update();
 
     // Update bodies.
-    // simulate = false;
     if (simulate && Date.now() - tLastUpdate > deltaT) {
       // console.log("update bodies");
       console.log("Time: ", solution[iter][0]);
       let y = solution[iter][1];
-      // console.log(y);
       for (i = 0; i < bodies.length; ++i) {
         bodies[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
         console.log(bodies[i].position);
       }
-      // simulate = false;
       ++iter;
       if (iter == solution.length) {
         simulate = false;
@@ -133,8 +119,6 @@ function createScene(canvas) {
     camera.position.set(0, 5, 18);
     scene.add(camera);
 
-    
-    
     // Create a group to hold all the objects
     root = new THREE.Object3D;
 
@@ -147,24 +131,22 @@ function createScene(canvas) {
 
     // Create the sphere
     geometry = new THREE.SphereGeometry(0.8, 20, 20);
-    mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
-    mesh.position.set(...r1);
-    bodies.push(mesh);
-    group.add( mesh );
+    mesh1 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
+    bodies.push(mesh1);
+    group.add(mesh1);
 
     // Create the sphere
     geometry = new THREE.SphereGeometry(0.8, 20, 20);
-    mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x0000ff}));
-    mesh.position.set(...r2);
-    bodies.push(mesh);
-    group.add( mesh );
+    mesh2 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x0000ff}));
+    bodies.push(mesh2);
+    group.add(mesh2);
 
-     // Add a directional light to show off the object
-     let light = new THREE.DirectionalLight( new THREE.Color("rgb(200, 200, 200)"), 1);
+    // Add a directional light to show off the object
+    let light = new THREE.DirectionalLight( new THREE.Color("rgb(200, 200, 200)"), 1);
 
-     // Position the light out from the scene, pointing at the origin
-     light.position.set(-2, -2, 2);
-     light.target.position.set(0,0,0);
+    // Position the light out from the scene, pointing at the origin
+    light.position.set(-2, -2, 2);
+    light.target.position.set(0,0,0);
     
     scene.add( root );
     scene.add(light);
@@ -174,12 +156,22 @@ function createScene(canvas) {
 
     //dragControls = new THREE.DragControls(bodies, camera, renderer.domElement);
     let eqs = 2; // acceleration and velocity. 
-    let dims = 3;
+    let dims = 3; // x,y,z
     let num_bodies = 2;
     for (i = 0; i < num_bodies; ++i) {
       off_r.push(eqs * dims * i);
       off_v.push(off_r[i] + dims);
     }
-    solve();
+    // Initial values of the system.
+    // Define initial position vectors
+    let r1 = [-2, 0, 0];
+    mesh1.position.set(...r1);
+    let r2 = [2, 0, 0];
+    mesh2.position.set(...r2);
+     // Define initial velocities
+    let v1 = [0,0.5,0];
+    let v2 = [0,0.5,0];
+    let y0 = [...r1,...v1, ...r2, ...v2];
+    solve(y0);
     simulate = true;
 }
