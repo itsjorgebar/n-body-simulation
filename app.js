@@ -15,19 +15,12 @@ let bodies = [];
 let ambientLight = null;
 
 let solution = [];
-let currTime = null;
+let tLastUpdate = null;
 let iter = 0;
 let simulate = false;
 let deltaT = 0.1;
+let timeEnd = 200;
  
-// var s = new odex.Solver(1);
-// var f = function(x, y) {
-//     return y;
-// }
-// console.log(s.solve(f,
-//     0,    // initial x value
-//     [1],  // initial y values (just one in this example)
-//     1));
 $(document).ready(
 	function() {
 		let canvas = document.getElementById("webglcanvas");
@@ -40,90 +33,54 @@ $(document).ready(
 //  Physics
 // Define universal gravitation constant
 let G=6.67408e-11 // N-m2/kg2
-// Define masses
-let m1=1.2
-let m2=8 
 
 // Define initial position vectors
-let r1 = [-2, -2, -2];
-let r2 = [2, 2, 2];
+let r1 = [-2, 0, 0];
+let r2 = [2, 0, 0];
 
 // Define initial velocities
-v1=[0.01,0.01,0] // m/s
-v2=[-0.05,0,-0.1] // m/s
+v1=[0,0.5,0] // m/s
+v2=[0,0.5,0] // m/s
 
-let TwoBody = (m1,m2) => {
+let off_r = [];
+let off_v = [];
+let mass = [1.2, 8];
 
-  // Returns eqs solutions for body with index a, given another body b.
-  function body(a, b, y) {
-    let eqs = 2; // acceleration and velocity. 
-    let dims = 3;
+// Returns eqs solutions for body with index a, affected by another body b.
+function body(a, b, y) {
+  // vector from a to b.
+  let r_ab = [y[0 + off_r[a]] - y[0 + off_r[b]], 
+              y[1 + off_r[a]] - y[1 + off_r[b]], 
+              y[2 + off_r[a]] - y[2 + off_r[b]]];
 
-    // r offsets.
-    let a_r_off = a*dims*eqs;
-    let b_r_off = b*dims*eqs;
-    // let c_r_off = c*dims*eqs;
+  let denom = Math.pow(Math.sqrt(r_ab[0]**2 + r_ab[1]**2 + r_ab[2]**2), 3);
+  let scalar_ab = 1000000000 * -1 * G * mass[b] / denom;
 
-    // vector from a to b.
-    let r_ab = [y[0 + a_r_off] - y[0 + b_r_off], 
-                y[1 + a_r_off] - y[1 + b_r_off], 
-                y[2 + a_r_off] - y[2 + b_r_off]];
+  return [
+    y[0 + off_v[a]],
+    y[1 + off_v[a]],
+    y[2 + off_v[a]],
+    scalar_ab * r_ab[0],
+    scalar_ab * r_ab[1],
+    scalar_ab * r_ab[2],
+  ];
 
-    let denom = Math.pow(Math.sqrt(r_ab[0]**2 + r_ab[1]**2 + r_ab[2]**2), 3);
-    let scalar_ab = G * m2 / denom;
+}
 
-    // v offsets.
-    let a_v_off = a_r_off + dims;
-    let b_v_off = b_r_off + dims;
-    // let c_v_off = c_r_off + dims;
-
-    return [
-      scalar_ab * r_ab[0],
-      scalar_ab * r_ab[1],
-      scalar_ab * r_ab[2],
-      y[0 + a_v_off],
-      y[1 + a_v_off],
-      y[2 + a_v_off],
-    ];
-
-  }
-  return (x,y) => {
-    // let r12 = [y[0] - y[0 + 2*3], y[1] - y[1 + 2*3], y[2] - y[2 + 2*3]];
-    // let denom1 = Math.pow(Math.sqrt(r12[0]**2 + r12[1]**2 + r12[2]**2), 3);
-    // let scalar1 = G * m2 / denom1;
-    // return [
-    //   scalar1 * r12[0],
-    //   scalar1 * r12[1],
-    //   scalar1 * r12[2],
-    //   y[0 + 1*3],
-    //   y[1 + 1*3],
-    //   y[2 + 1*3],
-    // ];
-    return [
-      ...body(0,1,y),
-      ...body(1,0,y)
-    ];
-  };
-
+let TwoBody = (x,y) => {
+  return [
+    ...body(0,1,y),
+    ...body(1,0,y)
+  ];
 };
 
-let f = (x, y) => {
-     return y;
-}
 function solve() {
-  // let odex = require('odex');
   let s = new odex.Solver(12);
-  // let s = new odex.Solver(1);
-  // console.log(s.solve(f,
-  //    0,    // initial x value
-  //    [1],  // initial y values (just one in this example)
-  //    1));
   s.denseOutput = true;  // request interpolation closure in solution callback
-  sol = s.solve(TwoBody(m1,m2), 0, [...r1,...v1, ...r2, ...v2], 5, s.grid(deltaT, function(x,y) {
-    let time = parseFloat(x).toPrecision(2);
-    solution.push([time,y]);
-    // console.log("Time: "+ time);
-    // console.log("State: ",y);
+  sol = s.solve(TwoBody, 0, [...r1,...v1, ...r2, ...v2], timeEnd, 
+    s.grid(deltaT, (x,y) => {
+      let time = parseFloat(x).toPrecision(2);
+      solution.push([time,y]);
   })).y
 }
 
@@ -137,8 +94,22 @@ function run() {
     orbitControls.update();
 
     // Update bodies.
-    if (simulate && Date.now() - currTime > deltaT) {
+    // simulate = false;
+    if (simulate && Date.now() - tLastUpdate > deltaT) {
       // console.log("update bodies");
+      console.log("Time: ", solution[iter][0]);
+      let y = solution[iter][1];
+      // console.log(y);
+      for (i = 0; i < bodies.length; ++i) {
+        bodies[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
+        console.log(bodies[i].position);
+      }
+      // simulate = false;
+      ++iter;
+      if (iter == solution.length) {
+        simulate = false;
+      }
+      tLastUpdate = Date.now();
     } 
 }
 
@@ -202,6 +173,13 @@ function createScene(canvas) {
     orbitControls = new OrbitControls(camera, renderer.domElement);
 
     //dragControls = new THREE.DragControls(bodies, camera, renderer.domElement);
+    let eqs = 2; // acceleration and velocity. 
+    let dims = 3;
+    let num_bodies = 2;
+    for (i = 0; i < num_bodies; ++i) {
+      off_r.push(eqs * dims * i);
+      off_v.push(off_r[i] + dims);
+    }
     solve();
     simulate = true;
 }
