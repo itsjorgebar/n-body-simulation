@@ -16,7 +16,7 @@ solution = [],
 tLastUpdate = null,
 iter = 0,
 simulate = false,
-deltaT = 0.1,
+deltaT = 0.03,
 // Define masses
 mass = [1.2, 8];
 // Define solution offsets.
@@ -34,25 +34,27 @@ $(document).ready(
 
 // Returns eqs solutions for body with index a, affected by another body b.
 function body(a, b, y) {
-  // vector from a to b.
-  let r_ab = [y[0 + off_r[a]] - y[0 + off_r[b]], 
+  // vector from b to a.
+  let r_ba = [y[0 + off_r[a]] - y[0 + off_r[b]], 
               y[1 + off_r[a]] - y[1 + off_r[b]], 
               y[2 + off_r[a]] - y[2 + off_r[b]]];
 
-  let denom = Math.pow(Math.sqrt(r_ab[0]**2 + r_ab[1]**2 + r_ab[2]**2), 3);
+  let denom = Math.pow(Math.sqrt(r_ba[0]**2 + r_ba[1]**2 + r_ba[2]**2), 3);
   // Define universal gravitation constant
   let G = 6.67408e-11;
-  let scalar_ab = 1000000000 * -1 * G * mass[b] / denom;
+  let K = 1000000000 
+  let scalar_ab = -1 * K * G * mass[b] / denom;
 
   return [
+    // position derivatives (r')
     y[0 + off_v[a]],
     y[1 + off_v[a]],
     y[2 + off_v[a]],
-    scalar_ab * r_ab[0],
-    scalar_ab * r_ab[1],
-    scalar_ab * r_ab[2],
+    // velocity derivatives (v' or r'' or acceleration)
+    scalar_ab * r_ba[0],
+    scalar_ab * r_ba[1],
+    scalar_ab * r_ba[2],
   ];
-
 }
 
 let TwoBody = (x,y) => {
@@ -86,11 +88,11 @@ function run() {
     // Update bodies.
     if (simulate && Date.now() - tLastUpdate > deltaT) {
       // console.log("update bodies");
-      console.log("Time: ", solution[iter][0]);
+      //console.log("Time: ", solution[iter][0]);
       let y = solution[iter][1];
       for (i = 0; i < bodies.length; ++i) {
         bodies[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
-        console.log(bodies[i].position);
+        //console.log(bodies[i].position);
       }
       ++iter;
       if (iter == solution.length) {
