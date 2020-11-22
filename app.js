@@ -7,10 +7,9 @@ scene = null,
 camera = null,
 root = null,
 group = null,
+arrowGroup,
 orbitControls = null,
-dragControls= null,
 ambientLight = null,
-bodies = [],
 solution = [],
 tLastUpdate = null,
 iter = 0,
@@ -23,8 +22,12 @@ off_r = [],
 off_v = [],
 dims = 3, // x,y,z
 eqs = 2; // acceleration and velocity. 
-count = 3;
 num_bodies = 3;
+
+// Arrow
+let sourcePos,
+direction,
+arrow;
 
 $(document).ready(
 	function() {
@@ -116,7 +119,7 @@ let NBody = (x,y) => {
 function solve(y0) {
   let s = new odex.Solver(y0.length);
   s.denseOutput = true;
-  timeEnd = 60; // seconds.
+  timeEnd = 120; // seconds.
   sol = s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
@@ -138,7 +141,14 @@ function run() {
       //console.log("Time: ", solution[iter][0]);
       let y = solution[iter][1];
       for (let i = 0; i < num_bodies; ++i) {
-        bodies[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
+        group.children[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
+        // Update Arrows
+        arrowGroup.children[i].position.x = y[off_r[i]];
+        arrowGroup.children[i].position.y = y[off_r[i]+1];
+        arrowGroup.children[i].position.z = y[off_r[i]+2];
+        direction = new THREE.Vector3(y[off_v[i]], y[off_v[i]+1],y[off_v[i]+2]);
+        arrowGroup.children[i].setLength(direction.length()*4, (direction.length()*4)/6,(direction.length()*4)/12);
+        arrowGroup.children[i].setDirection(direction.normalize());
       }
       ++iter;
       if (iter == solution.length) {
@@ -182,15 +192,12 @@ function createScene(canvas) {
     geometry = new THREE.SphereGeometry(0.8, 20, 20);
 
     mesh1 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
-    bodies.push(mesh1);
     group.add(mesh1);
 
     mesh2 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x00ff00}));
-    bodies.push(mesh2);
     group.add(mesh2);
 
     mesh3 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xf0f0f0}));
-    bodies.push(mesh3);
     group.add(mesh3);
 
     // Add a directional light to show off the object
@@ -200,7 +207,7 @@ function createScene(canvas) {
     light.position.set(-2, -2, 2);
     light.target.position.set(0,0,0);
     
-    scene.add( root );
+    scene.add(root);
     scene.add(light);
 
     // Controls
@@ -262,6 +269,29 @@ function createScene(canvas) {
       y0.push(...r[i]);
       y0.push(...v[i]);
     }
+
+    // Create a group to hold all the arrows
+    arrowGroup = new THREE.Object3D;
+
+    // Loop for arrows
+    let pX,pY,pZ,vX,vY,vZ;
+    for (let i = 0; i < num_bodies; ++i) {
+      pX = y0[eqs*dims*i];
+      pY = y0[eqs*dims*i+1];
+      pZ = y0[eqs*dims*i+2];
+      vX = y0[eqs*dims*i+3];
+      vY = y0[eqs*dims*i+4];
+      vZ = y0[eqs*dims*i+5];
+      sourcePos = new THREE.Vector3(pX, pY, pZ);
+      direction = new THREE.Vector3(vX,vY,vZ);
+      arrow = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, 3, 0xff0000);
+      arrow.setLength(direction.length()*4, (direction.length()*4)/6,(direction.length()*4)/12);
+      arrowGroup.add(arrow);
+    }
+    
+    scene.add(arrowGroup);
+
+
     solve(y0);
     // console.log(y0);
     // console.log(solution);
