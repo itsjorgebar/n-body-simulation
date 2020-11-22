@@ -17,10 +17,14 @@ iter = 0,
 simulate = false,
 deltaT = 0.03,
 // Define masses
-mass = [1.2, 8];
+mass = [1.2, 8],
 // Define solution offsets.
 off_r = [],
 off_v = [],
+dims = 3, // x,y,z
+eqs = 2; // acceleration and velocity. 
+count = 2;
+num_bodies = 2;
 
 $(document).ready(
 	function() {
@@ -31,44 +35,89 @@ $(document).ready(
 	}
 );
 
-// Returns eqs solutions for body with index a, affected by another body b.
-function body(a, b, y) {
+function otherBodies(a) {
+  result = [];
+  for (i = 0; i < num_bodies; ++i) {
+    if (i != a) {
+      result.push(i);
+    }
+  }
+  // console.log(a,result);
+  return result;
+}
+
+// Returns v' solutions for body with index a, affected by another body b.
+// r: position
+// v: velocity (r')
+// a: acceleration (r'' or v')
+function bodyAcc2(a, b, y) {
   // vector from b to a.
   let r_ba = [y[0 + off_r[a]] - y[0 + off_r[b]], 
               y[1 + off_r[a]] - y[1 + off_r[b]], 
               y[2 + off_r[a]] - y[2 + off_r[b]]];
 
   let denom = Math.pow(Math.sqrt(r_ba[0]**2 + r_ba[1]**2 + r_ba[2]**2), 3);
-  // Define universal gravitation constant
-  let G = 6.67408e-11;
-  let K = 1000000000 
+  let G = 6.67408e-11; // Gravitation constant.
+  let K = 1000000000 // Empirically tuned constant.
   let scalar_ab = -1 * K * G * mass[b] / denom;
 
   return [
-    // position derivatives (r')
-    y[0 + off_v[a]],
-    y[1 + off_v[a]],
-    y[2 + off_v[a]],
-    // velocity derivatives (v' or r'' or acceleration)
+    // Acceleration (v' or r'')
     scalar_ab * r_ba[0],
     scalar_ab * r_ba[1],
     scalar_ab * r_ba[2],
   ];
 }
 
-let TwoBody = (x,y) => {
-  return [
-    ...body(0,1,y),
-    ...body(1,0,y)
-  ];
+// Describes derivatives for a body with index 'a' affected by other bodies 'bs'.
+// Returns a 6 dimensional vector of velocity and acceleration values.
+// Example: [r'x, r'y, r'z, v'x, v'y, v'z]
+function bodyEqsN(a, bs, y) {
+  let result = Array(eqs * dims).fill(0);
+
+  // Obtain velocity (r')
+  for (let i = 0; i < dims; ++i) {
+    result[i] = y[i + off_v[a]];
+  }
+
+  // Obtain acceleration (v')
+  bs.forEach(b => {
+    let ai = bodyAcc2(a, b, y);
+    for (j = 0; j < ai.length; ++j) {
+      result[j + dims] += ai[j];
+    }
+  });
+
+  return result;
+}
+
+// Returns derivatives for the system of equations.
+let NBody = (x,y) => {
+  let result = [];
+  for (let i = 0; i < num_bodies; ++i) { 
+      // console.log(bodyEqsN(i, otherBodies(i), y));
+    if (count > 0)
+      console.log(i,result.length);
+    result.push(...bodyEqsN(i, otherBodies(i), y));
+    if (count > 0) {
+      console.log(i,result.length);
+      --count;
+    }
+    
+  }
+  // if (go)
+  //   console.log(result);
+  // go = false;
+  // console.log(result);
+  return result;
 };
 
 // Solves the system of ODEs and stores the result in the solution global var.
 function solve(y0) {
   let s = new odex.Solver(y0.length);
   s.denseOutput = true;
-  timeEnd = 200; // seconds.
-  sol = s.solve(TwoBody, 0, y0, timeEnd, 
+  timeEnd = 60; // seconds.
+  sol = s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
       solution.push([time,y]);
@@ -89,7 +138,7 @@ function run() {
       // console.log("update bodies");
       //console.log("Time: ", solution[iter][0]);
       let y = solution[iter][1];
-      for (i = 0; i < bodies.length; ++i) {
+      for (let i = 0; i < num_bodies; ++i) {
         bodies[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
         //console.log(bodies[i].position);
       }
@@ -131,17 +180,20 @@ function createScene(canvas) {
     group = new THREE.Object3D;
     root.add(group);
 
-    // Create the sphere
+    // Create spheres
     geometry = new THREE.SphereGeometry(0.8, 20, 20);
+
     mesh1 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
     bodies.push(mesh1);
     group.add(mesh1);
 
-    // Create the sphere
-    geometry = new THREE.SphereGeometry(0.8, 20, 20);
-    mesh2 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x0000ff}));
+    mesh2 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x00ff00}));
     bodies.push(mesh2);
     group.add(mesh2);
+
+    mesh3 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x0000ff}));
+    bodies.push(mesh3);
+    group.add(mesh3);
 
     // Add a directional light to show off the object
     let light = new THREE.DirectionalLight( new THREE.Color("rgb(200, 200, 200)"), 1);
@@ -157,10 +209,7 @@ function createScene(canvas) {
     orbitControls = new OrbitControls(camera, renderer.domElement);
 
     //dragControls = new THREE.DragControls(bodies, camera, renderer.domElement);
-    let eqs = 2; // acceleration and velocity. 
-    let dims = 3; // x,y,z
-    let num_bodies = 2;
-    for (i = 0; i < num_bodies; ++i) {
+    for (let i = 0; i < num_bodies; ++i) {
       off_r.push(eqs * dims * i);
       off_v.push(off_r[i] + dims);
     }
@@ -170,10 +219,25 @@ function createScene(canvas) {
     mesh1.position.set(...r1);
     let r2 = [2, 0, 0];
     mesh2.position.set(...r2);
+    let r3 = [0, 0, -2];
+    mesh3.position.set(...r3);
+    let r = [r1, r2, r3];
      // Define initial velocities
     let v1 = [0,0.5,0];
     let v2 = [0,0.5,0];
-    let y0 = [...r1,...v1, ...r2, ...v2];
+    let v3 = [0,0.5,0];
+    let v = [v1, v2, v3];
+
+    let y0 = [];
+    for (let i = 0; i < num_bodies; ++i) {
+      y0.push(...r[i]);
+      y0.push(...v[i]);
+    }
+    // let y0 = [...r1, ...v1,
+    //           ...r2, ...v2,
+    //           ...r3, ...v3];
     solve(y0);
     simulate = true;
+    // console.log(y0);
+    // console.log(solution);
 }
