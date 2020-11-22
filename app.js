@@ -58,8 +58,8 @@ function bodyAcc2(a, b, y) {
               y[2 + off_r[a]] - y[2 + off_r[b]]];
 
   let denom = Math.pow(Math.sqrt(r_ba[0]**2 + r_ba[1]**2 + r_ba[2]**2), 3);
-  let G = 6.67408e-11; // Gravitation constant.
-  let K = 1000000000 // Empirically tuned constant.
+  let G = 1 // 6.67408e-11; // Gravitation constant.
+  let K = 10 // 1000000000 // Empirically tuned constant.
   let scalar_ab = -1 * K * G * mass[b] / denom;
 
   return [
@@ -116,7 +116,7 @@ let NBody = (x,y) => {
 function solve(y0) {
   let s = new odex.Solver(y0.length);
   s.denseOutput = true;
-  timeEnd = 30; // seconds.
+  timeEnd = 60; // seconds.
   sol = s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
@@ -213,19 +213,45 @@ function createScene(canvas) {
     }
     // Initial values of the system.
     // Define initial position vectors
-    let r1 = [-2, 0, 0];
-    mesh1.position.set(...r1);
-    let r2 = [2, 0, 0];
-    mesh2.position.set(...r2);
-    let r3 = [0, 0, -2];
-    mesh3.position.set(...r3);
-    let r = [r1, r2, r3];
-     // Define initial velocities
-    let v1 = [0,0.5,0];
-    let v2 = [0,0.5,0];
-    let v3 = [0,0.5,0];
-    let v = [v1, v2, v3];
-
+     let r1 = [-0.97000436, 0.24308753, 0];
+     for (let i = 0; i < r1.length; ++i) {
+       r1[i] *= 10;
+     }
+     mesh1.position.set(...r1);
+     let r2 = [0, 0, 0];
+     mesh2.position.set(...r2);
+     let r3 = [0.97000436, -0.24308753, 0];
+     for (let i = 0; i < r3.length; ++i) {
+       r3[i] *= 10;
+     }
+     mesh3.position.set(...r3);
+     let r = [r1, r2, r3];
+      // Define initial velocities
+     let v1 = [0.4662036850, 0.4323657300, 0];      
+     // for (let i = 0; i < dims; ++i) {
+     //   v1[i] *= 10;
+     // }
+     let v2 = [-0.93240737, -0.86473146, 0];     
+     // for (let i = 0; i < dims; ++i) {
+     //   v2[i] *= 10;
+     // }
+     let v3 = [0.4662036850, 0.4323657300, 0];      
+     // for (let i = 0; i < dims; ++i) {
+     //   v3[i] *= 10;
+     // }
+     let v = [v1, v2, v3];
+    // let r1 = [-2, 0, 0];
+    // mesh1.position.set(...r1);
+    // let r2 = [2, 0, 0];
+    // mesh2.position.set(...r2);
+    // let r3 = [0, 0, -2];
+    // mesh3.position.set(...r3);
+    // let r = [r1, r2, r3];
+    //  // Define initial velocities
+    // let v1 = [0,0.5,0];
+    // let v2 = [0,0.5,0];
+    // let v3 = [0,0.5,0];
+    // let v = [v1, v2, v3];
     // Serialize values.
     // Structure is:
     //   [r1x, r1y, r1z, v1x, v2y, v3z
@@ -237,7 +263,15 @@ function createScene(canvas) {
       y0.push(...v[i]);
     }
     solve(y0);
-    simulate = true;
     // console.log(y0);
     // console.log(solution);
+    let simButton = document.getElementById("simulate");
+    simButton.addEventListener("click", startSimulation);
+    simButton.disabled = false;
 }
+
+function startSimulation() {
+  simulate = true;
+}
+// Here the gravitational constant G has been set to 1, and the initial conditions are 
+// r1(0) = −r3(0) = (−0.97000436, 0.24308753); r2(0) = (0,0); v1(0) = v3(0) = (0.4662036850, 0.4323657300); v2(0) = (−0.93240737, −0.86473146). The values are obtained from Chenciner & Montgomery (2000).

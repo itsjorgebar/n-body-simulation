@@ -15,6 +15,12 @@ body{
 	left:20px;
 }
 
+#simulate {
+	position:absolute;
+	bottom:20px;
+	right:20px;
+}
+
 #animations {
 	color:MidnightBlue;
 	position:absolute;
