@@ -18,14 +18,14 @@ iter = 0,
 simulate = false,
 deltaT = 0.03,
 // Define masses
-mass = [1.2, 8],
+mass = [1, 1, 1],
 // Define solution offsets.
 off_r = [],
 off_v = [],
 dims = 3, // x,y,z
 eqs = 2; // acceleration and velocity. 
-count = 2;
-num_bodies = 2;
+count = 3;
+num_bodies = 3;
 
 $(document).ready(
 	function() {
@@ -38,7 +38,7 @@ $(document).ready(
 
 function otherBodies(a) {
   result = [];
-  for (i = 0; i < num_bodies; ++i) {
+  for (let i = 0; i < num_bodies; ++i) {
     if (i != a) {
       result.push(i);
     }
@@ -84,7 +84,7 @@ function bodyEqsN(a, bs, y) {
   // Obtain acceleration (v')
   bs.forEach(b => {
     let ai = bodyAcc2(a, b, y);
-    for (j = 0; j < ai.length; ++j) {
+    for (let j = 0; j < ai.length; ++j) {
       result[j + dims] += ai[j];
     }
   });
@@ -96,20 +96,8 @@ function bodyEqsN(a, bs, y) {
 let NBody = (x,y) => {
   let result = [];
   for (let i = 0; i < num_bodies; ++i) { 
-      // console.log(bodyEqsN(i, otherBodies(i), y));
-    if (count > 0)
-      console.log(i,result.length);
     result.push(...bodyEqsN(i, otherBodies(i), y));
-    if (count > 0) {
-      console.log(i,result.length);
-      --count;
-    }
-    
   }
-  // if (go)
-  //   console.log(result);
-  // go = false;
-  // console.log(result);
   return result;
 };
 
@@ -117,7 +105,7 @@ let NBody = (x,y) => {
 function solve(y0) {
   let s = new odex.Solver(y0.length);
   s.denseOutput = true;
-  timeEnd = 60; // seconds.
+  timeEnd = 30; // seconds.
   sol = s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
@@ -136,12 +124,10 @@ function run() {
 
     // Update bodies.
     if (simulate && Date.now() - tLastUpdate > deltaT) {
-      // console.log("update bodies");
       //console.log("Time: ", solution[iter][0]);
       let y = solution[iter][1];
       for (let i = 0; i < num_bodies; ++i) {
         bodies[i].position.set(y[off_r[i]], y[off_r[i]+1], y[off_r[i]+2]);
-        //console.log(bodies[i].position);
       }
       ++iter;
       if (iter == solution.length) {
@@ -192,7 +178,7 @@ function createScene(canvas) {
     bodies.push(mesh2);
     group.add(mesh2);
 
-    mesh3 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0x0000ff}));
+    mesh3 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xf0f0f0}));
     bodies.push(mesh3);
     group.add(mesh3);
 
