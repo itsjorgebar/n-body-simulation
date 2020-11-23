@@ -30,7 +30,19 @@
     <div id="prompt">
       Drag the mouse to rotate the camera<br>Use the scroll wheel to zoom.
     </div>
-    <button id="simulate" disabled>Simulate</button>
+    <div class="ui-button2">
+      <input type="text" id="x_input" placeholder="x" size="5">
+      <input type="text" id="y_input" placeholder="y" size="5">
+      <input type="text" id="z_input" placeholder="z" size="5">
+      <button id="addBody">Add body</button>
+    </div>
+    <div class="ui-button">
+      <input type="checkbox" id="toggleArrows" name="checkbox" checked>
+      <label for="toggleArrows">Show vectors</label>
+      <button id="simulate" disabled>Simulate</button>
+      
+      <button id="removeBody">Remove body</button>
+    </div>
   </div>
 </body>
 

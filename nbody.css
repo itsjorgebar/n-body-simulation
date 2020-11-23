@@ -15,9 +15,15 @@ body{
 	left:20px;
 }
 
-#simulate {
+.ui-button {
 	position:absolute;
 	bottom:20px;
+	right:20px;
+}
+
+.ui-button2 {
+	position:absolute;
+	bottom:50px;
 	right:20px;
 }
 
