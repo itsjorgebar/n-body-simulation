@@ -105,6 +105,13 @@ class Body {
     this.ivy = this.irx + 4;
     this.ivz = this.irx + 5;
   }
+
+  // Update velocity components of the body. Receives a Vector3 object.
+  updateVelocity(v) {
+      this.velocity = v;
+      this.arrowV.setDirection(v.clone().normalize());
+      this.arrowV.setLength(...arrowLength(v));
+  }
 }
 
 // *****************************************************************************
@@ -174,14 +181,16 @@ $(document).ready(
 //         and (x,y,z) are standard basis vectors
 
 function solve(y0) {
+  iter = 0;
+  solution = [];
   let s = new odex.Solver(y0.length);
   s.denseOutput = true;
   timeEnd = 120; // seconds.
-  sol = s.solve(NBody, 0, y0, timeEnd, 
+  let sol = s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
       solution.push([time,y]);
-  })).y
+  }));
 }
 
 function run() {
@@ -199,8 +208,7 @@ function run() {
 
       // Update velocity arrow.
       let v = getVelocity(y,body);
-      body.arrowV.setDirection(v.clone().normalize());
-      body.arrowV.setLength(...arrowLength(v));
+      body.updateVelocity(getVelocity(y,body));
 
       // TODO: update acceleration arrow.
     });
@@ -236,8 +244,18 @@ function setupScene(canvas) {
   orbitControls = new OrbitControls(camera, renderer.domElement);
 }
 
+// Returns an array that encodes the bodies' movement.
+function serializeBodies() {
+  let y0 = [];
+  bodies.forEach(body => {
+    y0.push(...body.mesh.position.toArray());
+    y0.push(...body.velocity.toArray());
+  });
+  return y0;
+}
+
+// Define initial bodies configuration. arXiv:math/0011268
 function createBodies() {
-  // Define initial configuration. arXiv:math/0011268
   let r = [];
   r.push([-0.97000436, 0.24308753, 0]);
   r.push([0,0,0]);
@@ -262,13 +280,7 @@ function createBodies() {
   bodies.push(b3);
   scene.add(b3.mesh);
 
-  // Serialize values.
-  let y0 = [];
-  bodies.forEach(body => {
-    y0.push(...body.mesh.position.toArray());
-    y0.push(...body.velocity.toArray());
-  });
-  return y0;
+  return serializeBodies();
 }
 
 function createUI() {
@@ -281,44 +293,45 @@ function createUI() {
   getz = document.getElementById("z_input");
 
   // TODO: make the add and remove buttons work.
-  /*
-  let addBody = document.getElementById("addBody");
-  addBody.addEventListener("click", ()=>{
-    // get x, y, z values
-    if(getx.value && gety.value && getz.value){
-      console.log(getx.value, gety.value, getz.value);
-      num_bodies++;  
-      mesh1 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
+  // let addBody = document.getElementById("addBody");
+  // addBody.addEventListener("click", ()=>{
+  //   // get x, y, z values
+  //   if(getx.value && gety.value && getz.value){
+  //     console.log(getx.value, gety.value, getz.value);
+  //     num_bodies++;  
+  //     mesh1 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
 
-      // set position of new particle  
-      let newGroupParticle = new THREE.Object3D;
-      newGroupParticle.add(mesh1);
-      group.add(newGroupParticle);
-      bodies.push(newGroupParticle);
-      newGroupParticle.position.set(getx.value, gety.value, getz.value); // warning!
-      r.push([getx.value,gety.value,getz.value]);
+  //     // set position of new particle  
+  //     let newGroupParticle = new THREE.Object3D;
+  //     newGroupParticle.add(mesh1);
+  //     group.add(newGroupParticle);
+  //     bodies.push(newGroupParticle);
+  //     newGroupParticle.position.set(getx.value, gety.value, getz.value); // warning!
+  //     r.push([getx.value,gety.value,getz.value]);
 
-      // set init velocity of new particle
-      v.push([0.4662036850, 0.4323657300, 0]); //static
+  //     // set init velocity of new particle
+  //     v.push([0.4662036850, 0.4323657300, 0]); //static
 
-      // add to & update scene
-      group.updateMatrixWorld();
-    } else {
-      alert("missing value!");
-    } 
-  });
+  //     // add to & update scene
+  //     group.updateMatrixWorld();
+  //   } else {
+  //     alert("missing value!");
+  //   } 
+  // });
 
+  // Removes the most recently added body from the scene.
   let removeBody = document.getElementById("removeBody");
   removeBody.addEventListener("click", ()=>{
-    bodies.pop();
-    // TODO: execute new simulation;
+    if (bodies.length == 0) return;
     simulate = false;
-    // let y0 = ;
-    group.updateMatrixWorld();
+    scene.remove(bodies[bodies.length - 1].mesh);
+    bodies.pop();
+    let y0 = serializeBodies();
+    solve(y0);
+    simulate = true;
   });
-  */
 
-  // Update arrow display attribute.
+  // Updates arrow display attribute.
   let checkVectors = document.querySelector("input[name=checkbox]");
   checkVectors.addEventListener("change", ()=>{
     var checked = $(checkVectors).prop('checked');
