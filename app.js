@@ -59,10 +59,12 @@ function otherBodies(toExclude) {
   return result;
 }
 
+// Returns position vector of a body in a solution.
 function getPosition(y, body) {
   return new Vector3(y[body.irx], y[body.iry], y[body.irz]);
 }
 
+// Returns velocity vector of a body in a solution.
 function getVelocity(y, body) {
   return new Vector3(y[body.ivx], y[body.ivy], y[body.ivz]);
 }
@@ -111,10 +113,7 @@ class Body {
 // Math
 // *****************************************************************************
 
-// Returns v' solutions for body with index a, affected by another body b.
-// r: position
-// v: velocity (r')
-// a: acceleration (r'' or v')
+// Returns v' solutions for a body affected by the gravitation of another.
 function bodyAcc2(receiver, applier, y) {
   // Vector from receiver to applier.
   let rRecToApp = new Vector3().subVectors(getPosition(y,receiver),
@@ -128,7 +127,7 @@ function bodyAcc2(receiver, applier, y) {
   return rRecToApp.multiplyScalar(scalar);
 }
 
-// Describes derivatives for a body with index 'a' affected by other bodies 'bs'.
+// Describes derivatives for a body the other bodies.
 // Returns a 6 dimensional vector of velocity and acceleration values.
 // Example: [r'x, r'y, r'z, v'x, v'y, v'z]
 function bodyEqsN(receiver, appliers, y) {
@@ -153,6 +152,7 @@ let NBody = (x,y) => {
   });
   return result;
 };
+
 // *****************************************************************************
 // Simulation
 // *****************************************************************************
