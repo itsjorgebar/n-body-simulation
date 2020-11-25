@@ -186,7 +186,7 @@ function solve(y0) {
   solution = [];
   let s = new odex.Solver(y0.length);
   s.denseOutput = true;
-  timeEnd = 120; // seconds.
+  timeEnd = 10; // seconds.
   let sol = s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (x,y) => {
       let time = parseFloat(x).toPrecision(2);
@@ -216,6 +216,9 @@ function run() {
     ++iter;
     if (iter == solution.length) {
       simulate = false;
+      const y0 = serializeBodies();
+      solve(y0);
+      simulate = true;
     }
     tLastUpdate = Date.now();
   } 
@@ -245,6 +248,7 @@ function setupScene(canvas) {
   orbitControls = new OrbitControls(camera, renderer.domElement);
 }
 
+// Returns an array that encodes the bodies' movement.
 function serializeBodies() {
   let y0 = [];
   bodies.forEach(body => {
@@ -254,8 +258,8 @@ function serializeBodies() {
   return y0;
 }
 
+// Define initial bodies configuration. arXiv:math/0011268
 function createBodies() {
-  // Define initial configuration. arXiv:math/0011268
   let r = [];
   r.push([-0.97000436, 0.24308753, 0]);
   r.push([0,0,0]);
@@ -281,44 +285,43 @@ function createBodies() {
   scene.add(b3.mesh);
 
   return serializeBodies();
-  }
+}
 
 function createUI() {
   let simButton = document.getElementById("simulate");
   simButton.addEventListener("click", startSimulation);
   simButton.disabled = false;
    
-  var getx = document.getElementById("x_input"), 
-  gety = document.getElementById("y_input"), 
-  getz = document.getElementById("z_input");
+  let rx = document.getElementById("rx"),
+    ry= document.getElementById("ry"), 
+    rz= document.getElementById("rz"),
+    vx= document.getElementById("vx"), 
+    vy= document.getElementById("vy"), 
+    vz= document.getElementById("vz");
+    mass = document.getElementById("mass");
 
   // TODO: make the add and remove buttons work.
-  // let addBody = document.getElementById("addBody");
-  // addBody.addEventListener("click", ()=>{
-  //   // get x, y, z values
-  //   if(getx.value && gety.value && getz.value){
-  //     console.log(getx.value, gety.value, getz.value);
-  //     num_bodies++;  
-  //     mesh1 = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xff0000}));
+  let addBody = document.getElementById("addBody");
+  addBody.addEventListener("click", ()=>{
+    if (mass.value && rx.value && ry.value && rz.value && vx.value && vy.value
+      && vz.value) {
+      // Create body.
+      const args = [mass, rx, ry, rz, vx, vy, vz].map(k => parseFloat(k.value));
+      simulate = false;
+      let b = new Body(...args);
+      bodies.push(b);
+      scene.add(b.mesh)
 
-  //     // set position of new particle  
-  //     let newGroupParticle = new THREE.Object3D;
-  //     newGroupParticle.add(mesh1);
-  //     group.add(newGroupParticle);
-  //     bodies.push(newGroupParticle);
-  //     newGroupParticle.position.set(getx.value, gety.value, getz.value); // warning!
-  //     r.push([getx.value,gety.value,getz.value]);
+      // Compute simulation.
+      let y0 = serializeBodies();
+      solve(y0);
+      simulate = true;
+    } else {
+      alert("Body attributes haven't been specified.")
+    }
+  });
 
-  //     // set init velocity of new particle
-  //     v.push([0.4662036850, 0.4323657300, 0]); //static
-
-  //     // add to & update scene
-  //     group.updateMatrixWorld();
-  //   } else {
-  //     alert("missing value!");
-  //   } 
-  // });
-
+  // Removes the most recently added body from the scene.
   let removeBody = document.getElementById("removeBody");
   removeBody.addEventListener("click", ()=>{
     if (bodies.length == 0) return;
@@ -330,7 +333,7 @@ function createUI() {
     simulate = true;
   });
 
-  // Update arrow display attribute.
+  // Updates arrow display attribute.
   let checkVectors = document.querySelector("input[name=checkbox]");
   checkVectors.addEventListener("change", ()=>{
     var checked = $(checkVectors).prop('checked');
