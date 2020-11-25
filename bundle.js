@@ -15,8 +15,6 @@ var OrbitControls = require('three-orbit-controls')(THREE)
 let renderer = null, 
 scene = null, 
 camera = null,
-root = null,
-group = null,
 orbitControls = null,
 ambientLight = null,
 
@@ -343,6 +341,10 @@ function createScene(canvas) {
 }
 
 
+// Tasks:
+// Badillo: Camera, post processing
+// Guti: trail
+// Jorge: Nbody add remove
 },{"jquery":2,"odex":3,"three":5,"three-orbit-controls":4}],2:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.5.1

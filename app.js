@@ -14,8 +14,6 @@ var OrbitControls = require('three-orbit-controls')(THREE)
 let renderer = null, 
 scene = null, 
 camera = null,
-root = null,
-group = null,
 orbitControls = null,
 ambientLight = null,
 
