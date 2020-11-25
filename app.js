@@ -341,3 +341,8 @@ function createScene(canvas) {
     createUI();
 }
 
+
+// Tasks:
+// Badillo: Camera, post processing
+// Guti: trail
+// Jorge: Nbody add remove
