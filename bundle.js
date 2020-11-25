@@ -68,8 +68,14 @@ function getVelocity(y, body) {
   return new Vector3(y[body.ivx], y[body.ivy], y[body.ivz]);
 }
 
-function startSimulation() {
-  simulate = true;
+function toggleSimulation() {
+  let button = document.getElementById("simulate");
+  simulate = !simulate;
+  if (simulate) {
+    button.innerHTML = "Stop";
+  } else {
+    button.innerHTML = "Start";
+  }
 }
 
 class Body {
@@ -258,8 +264,15 @@ function serializeBodies() {
   return y0;
 }
 
-// Define initial bodies configuration. arXiv:math/0011268
+// Display initial bodies configuration.
 function createBodies() {
+  // Remove old bodies.
+  bodies.forEach(body => {
+    scene.remove(body.mesh);
+  });
+  bodies = [];
+
+  // Define initial values.  arXiv:math/0011268
   let r = [];
   r.push([-0.97000436, 0.24308753, 0]);
   r.push([0,0,0]);
@@ -288,9 +301,16 @@ function createBodies() {
 }
 
 function createUI() {
+  // Toggles simulation.
   let simButton = document.getElementById("simulate");
-  simButton.addEventListener("click", startSimulation);
+  simButton.addEventListener("click", toggleSimulation);
   simButton.disabled = false;
+
+  // Resets simulation.
+  let resetButton = document.getElementById("reset");
+  resetButton.addEventListener("click", resetSimulation);
+  resetButton.disabled = false;
+
    
   let rx = document.getElementById("rx"),
     ry= document.getElementById("ry"), 
@@ -354,11 +374,17 @@ function createScene(canvas) {
     createUI();
 }
 
+function resetSimulation() {
+  simulate = true;
+  toggleSimulation();
+  let y0 = createBodies();
+  solve(y0);
+}
 
 // Tasks:
 // Badillo: Camera, post processing
 // Guti: trail
-// Jorge: Nbody add remove
+// Jorge: acceleration arrow.
 },{"jquery":2,"odex":3,"three":5,"three-orbit-controls":4}],2:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.5.1
