@@ -316,7 +316,7 @@ function createUI() {
     rz= document.getElementById("rz"),
     vx= document.getElementById("vx"), 
     vy= document.getElementById("vy"), 
-    vz= document.getElementById("vz");
+    vz= document.getElementById("vz"),
     mass = document.getElementById("mass");
 
   // TODO: make the add and remove buttons work.
