@@ -4,10 +4,12 @@
   "description": "NBody problem visualization",
   "main": "config.js",
   "dependencies": {
+    "dat.gui": "^0.7.7",
     "jquery": "^3.5.1",
     "odex": "^2.0.4",
     "postprocessing": "^6.18.0",
     "three": "^0.122.0",
+    "three-dat.gui": "^2.0.7",
     "three-orbit-controls": "^82.1.0"
   },
   "devDependencies": {
