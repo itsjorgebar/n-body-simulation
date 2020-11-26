@@ -334,28 +334,25 @@ function createBodies() {
 
 
 function createUI() {
-  //let rx, ry, rz, vx, vy, vz, mass;
-  /*
+  let rx, ry, rz, vx, vy, vz, mass;
+  
   function addbody() {
     if (mass && rx && ry && rz && vx && vy && vz) {
-      console.log("1");
       // Create body.
-      const args = [mass, rx, ry, rz, vx, vy, vz].map(k => parseFloat(k.value));
+      const args = [mass, rx, ry, rz, vx, vy, vz].map(k => parseFloat(k));
       simulate = false;
       let b = new Body(...args);
       bodies.push(b);
       scene.add(b.mesh)
-      console.log("2");
+
       // Compute simulation.
       let y0 = serializeBodies();
       solve(y0);
       simulate = true;
-      console.log("3");
-      console.log(simulate);
     } else {
       alert("Body attributes haven't been specified.")
     }
-}*/
+  }
 
   var options = {
     // control simulation
@@ -366,10 +363,8 @@ function createUI() {
     reset: function () {
       resetSimulation();
     },
-    // TODO: get addbody to work
     addBody: function () {
       addbody();
-      //console.log("addbody");
     },
     // control to remove last particle
     removeBody: function () {
@@ -439,62 +434,6 @@ function createUI() {
 
   edit.add(options, 'addBody');
   edit.add(options, 'removeBody');
-
-
-
-  // old UI
-  /*
-  // Toggles simulation.
-  let simButton = document.getElementById("simulate");
-  simButton.addEventListener("click", toggleSimulation);
-  simButton.disabled = false;
-
-  // Resets simulation.
-  let resetButton = document.getElementById("reset");
-  resetButton.addEventListener("click", resetSimulation);
-  resetButton.disabled = false;
-  */
-
-  let rx = document.getElementById("rx"),
-    ry = document.getElementById("ry"),
-    rz = document.getElementById("rz"),
-    vx = document.getElementById("vx"),
-    vy = document.getElementById("vy"),
-    vz = document.getElementById("vz");
-  mass = document.getElementById("mass");
-
-  // TODO: make the add and remove buttons work.
-
-  let addBody = document.getElementById("addBody");
-  addBody.addEventListener("click", () => {
-    if (mass && rx && ry && rz && vx && vy && vz) {
-      // Create body.
-      const args = [mass, rx, ry, rz, vx, vy, vz].map(k => parseFloat(k.value));
-      simulate = false;
-      let b = new Body(...args);
-      bodies.push(b);
-      scene.add(b.mesh)
-
-      // Compute simulation.
-      let y0 = serializeBodies();
-      solve(y0);
-      simulate = true;
-    } else {
-      alert("Body attributes haven't been specified.")
-    }
-  });
-  /*
-  // Removes the most recently added body from the scene.
-  let removeBody = document.getElementById("removeBody");
-  removeBody.addEventListener("click", ()=>{
-    if (bodies.length == 0) return;
-    simulate = false;
-    scene.remove(bodies[bodies.length - 1].mesh);
-    bodies.pop();
-    let y0 = serializeBodies();
-    solve(y0);
-    simulate = true;
-  });*/
 
   function rayCast(event) {
 
@@ -568,18 +507,6 @@ function createUI() {
 
     }
   });
-
-  // Updates arrow display attribute.
-  /*
-  let checkVectors = document.querySelector("input[name=checkbox]");
-  checkVectors.addEventListener("change", () => {
-    var checked = $(checkVectors).prop('checked');
-    checked ?
-      arrowList.forEach(e => e.visible = true) :
-      arrowList.forEach(e => e.visible = false)
-
-    scene.updateMatrixWorld();
-  });*/
 }
 
 function createScene(canvas) {
@@ -595,8 +522,3 @@ function resetSimulation() {
   let y0 = createBodies();
   solve(y0);
 }
-
-// Tasks:
-// Badillo: Camera, post processing
-// Guti: trail
-// Jorge: acceleration arrow.
