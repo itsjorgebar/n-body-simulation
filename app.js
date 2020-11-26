@@ -7,8 +7,12 @@ var $ = require('jquery')
 var THREE = require('three')
 var odex = require('odex');
 const { data } = require('jquery');
-const { Vector3 } = require('three');
-var OrbitControls = require('three-orbit-controls')(THREE)
+const { Vector3, Raycaster, Vector2 } = require('three');
+var OrbitControls = require('three-orbit-controls')(THREE);
+var {EffectComposer, EffectPass, RenderPass, OutlineEffect, BlendFunction} = require('postprocessing');
+
+// Post-processing globals
+let raycaster = new Raycaster(), selectedObject = null, effect = null, pass = null, selection = [];
 
 // Canvas globals
 let renderer = null, 
@@ -202,7 +206,7 @@ function solve(y0) {
 function run() {
   requestAnimationFrame(function() { run(); });
 
-  renderer.render( scene, camera );
+  composer.render( scene, camera );
   orbitControls.update();
 
   // Update bodies.
@@ -251,6 +255,27 @@ function setupScene(canvas) {
   scene.add(light);
 
   orbitControls = new OrbitControls(camera, renderer.domElement);
+
+  // post-processing composer
+  const outlineEffect = new OutlineEffect(scene, camera, {
+    blendFunction: BlendFunction.SCREEN,
+    edgeStrength: 2.5,
+    pulseSpeed: 0.0,
+    visibleEdgeColor: 0xffffff,
+    hiddenEdgeColor: 0x22090a,
+    height: 480,
+    blur: false,
+    xRay: true
+  });
+
+  outlineEffect.selection.set(selection);
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const outlinePass = new EffectPass(camera, outlineEffect);
+
+  effect = outlineEffect;
+  pass = outlinePass;
+  composer.addPass(outlinePass);
 }
 
 // Returns an array that encodes the bodies' movement.
@@ -352,17 +377,86 @@ function createUI() {
     simulate = true;
   });
 
+  function rayCast(event){
+
+    //if(event.isPrimary===false) return;
+    const mouse = new Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2.0 - 1.0;
+    mouse.y = -(event.clientY / window.innerHeight) * 2.0 + 1.0;
+    
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true); //!
+    console.log(intersects.length);
+    if(intersects.length > 0){
+      const object = intersects[0].object;
+      
+      if(object!== undefined){
+        console.log("intersected!", object);
+        selectedObject = object;
+        //console.log(selectedObject.children.length);
+        handleSelection();
+      } 
+    }
+  }
+
+  function handleSelection(){
+    const selection = effect.selection;
+    
+    // avoid highlight arrows
+    selection.clear();
+    if(selectedObject!==null && selectedObject.children.length>0){
+      selection.size>0?
+      selection.clear():selection.add(selectedObject)
+    } else {
+      selection.clear();
+    }
+    scene.updateMatrixWorld();
+  }
+
+  // handle 
+  renderer.domElement.addEventListener("pointermove",()=>{
+    if(simulate){
+      rayCast(event);
+      //handleSelection();
+    }
+  });
+
+  renderer.domElement.addEventListener("mousedown", (event)=>{
+    event.preventDefault();
+    const mouse = new Vector2();
+    mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+
+    raycaster.setFromCamera( mouse, camera );
+
+    var intersects = raycaster.intersectObjects(scene.children, true);
+    
+    if ( intersects.length > 0 ) {
+      const object = intersects[0].object;
+
+      if(object!=undefined){
+        //console.log("the camera is", camera);
+        
+        console.log("The object is", object.position);
+        let target = object.position;
+        camera.lookAt(target);
+        orbitControls.target = target;
+        console.log(orbitControls.target);
+          //intersects[0].object.callback();
+      }
+
+    }
+  });
+
   // Updates arrow display attribute.
   let checkVectors = document.querySelector("input[name=checkbox]");
   checkVectors.addEventListener("change", ()=>{
     var checked = $(checkVectors).prop('checked');
-    if(checked===true){
-      arrowList.forEach(e=>e.visible=true);
-      scene.updateMatrixWorld();
-    } else {
-      arrowList.forEach(e=>e.visible=false);
-      scene.updateMatrixWorld();
-    }
+    checked?
+      arrowList.forEach(e=>e.visible=true):
+      arrowList.forEach(e=>e.visible=false)
+
+    scene.updateMatrixWorld();
   });
 }
 
