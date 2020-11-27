@@ -97,13 +97,11 @@ class Body {
     // Velocity arrow.
     let velocity = new THREE.Vector3(vx,vy,vz);
     this.arrowV = new THREE.ArrowHelper(velocity.clone().normalize(), 
-      THREE.Vector3(0,0,0), 3, 0xff0000);
+      THREE.Vector3(), 3, 0xff0000);
     this.arrowV.setLength(...arrowLength(velocity));
     this.mesh.add(this.arrowV);
     this.velocity = velocity;
     arrowList.push(this.arrowV);
-
-    // TODO: Acceleration arrow.
 
     // Solution offsets.
     //   [r1x, r1y, r1z, v1x, v2y, v3z
@@ -159,9 +157,9 @@ function bodyEqsN(receiver, appliers, y) {
 
 // Describes the system of ODEs.
 // Params -
-// x: time (unused)
+// t: time (unused)
 // y: position and velocity of all bodies.
-let NBody = (x,y) => {
+let NBody = (t,y) => {
   let result = [];
   bodies.forEach(body => {
     result.push(...bodyEqsN(body, otherBodies(body), y));
@@ -198,8 +196,8 @@ function solve(y0) {
   s.denseOutput = true;
   timeEnd = 10; // seconds.
   let sol = s.solve(NBody, 0, y0, timeEnd, 
-    s.grid(deltaT, (x,y) => {
-      let time = parseFloat(x).toPrecision(2);
+    s.grid(deltaT, (t,y) => {
+      let time = parseFloat(t).toPrecision(2);
       solution.push([time,y]);
   }));
 }
@@ -219,9 +217,7 @@ function run() {
 
       // Update velocity arrow.
       let v = getVelocity(y,body);
-      body.updateVelocity(getVelocity(y,body));
-
-      // TODO: update acceleration arrow.
+      body.updateVelocity(v);
     });
     ++iter;
     if (iter == solution.length) {
@@ -342,7 +338,7 @@ function createUI() {
     rz= document.getElementById("rz"),
     vx= document.getElementById("vx"), 
     vy= document.getElementById("vy"), 
-    vz= document.getElementById("vz");
+    vz= document.getElementById("vz"),
     mass = document.getElementById("mass");
 
   // TODO: make the add and remove buttons work.
@@ -471,6 +467,7 @@ function createScene(canvas) {
 function resetSimulation() {
   simulate = true;
   toggleSimulation();
+  camera.target.set(0, 0, 0);
   let y0 = createBodies();
   solve(y0);
 }
