@@ -35,9 +35,6 @@
   <p align="center">
     A 3D web app to visualize celestial mechanics.
     <br />
-    <a href="https://github.com/JorgeBarMza/n-body-simulation"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
     <a href="https://github.com/JorgeBarMza/n-body-simulation">View Demo</a>
     ·
     <a href="https://github.com/JorgeBarMza/n-body-simulation/issues">Report Bug or Request Feature</a>
@@ -54,6 +51,7 @@
       <a href="#about-the-project">About The Project</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
+        <li><a href="#built-with">Math</a></li>
       </ul>
     </li>
     <li>
@@ -76,14 +74,21 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
 
-An interactive 3D web app that simulates a dynamical system of particles under the influence of gravity. Movement is modelled by a numerically-integrated sytem of ODEs based on Newtonian mechanics. 
+An interactive 3D web app that simulates a dynamical system of particles under the influence of gravity. 
 
 ### Built With
 
 * [ODEX](https://github.com/littleredcomputer/odex-js)
 * [Three.js](https://threejs.org/)
+TODO: Add the rest.
 
-<!-- GETTING STARTED -->
+### Math
+
+Movement is modelled by a sytem of nonlinear ordinary differential equations based on Newtonian mechanics. Numerical integration methods are suitable to obtain the position and velocity of all bodies at arbitrarilly chosen timesteps, this project uses the Gragg-Bulirsch-Stoer algorithm. 
+
+The system can be described by equating the net force on each object to the sum of gravitational pulls of all other bodies. This yields a system of second order ODEs where position as a function of time is the unknown variable. Each equation can be transformed into two first order ODEs, which facilitates the computations.  
+
+<!- GETTING STARTED -->
 ## Getting Started
 
 To get a local copy up and running follow these simple steps.
@@ -109,6 +114,7 @@ To get a local copy up and running follow these simple steps.
    ```sh
    npm run build
    ```
+TODO: add liveserver step.
 
 <!-- LICENSE -->
 ## License
@@ -132,14 +138,14 @@ Thanks [Octavio Navarro](https://github.com/octavio-navarro) for providing valua
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/JorgeBarMza/repo.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [contributors-url]: https://github.com/JorgeBarMza/n-body-simulation/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/JorgeBarMza/repo.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [forks-url]: https://github.com/JorgeBarMza/n-body-simulation/network/members
-[stars-shield]: https://img.shields.io/github/stars/JorgeBarMza/repo.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [stars-url]: https://github.com/JorgeBarMza/n-body-simulation/stargazers
-[issues-shield]: https://img.shields.io/github/issues/JorgeBarMza/repo.svg?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [issues-url]: https://github.com/JorgeBarMza/n-body-simulation/issues
-[license-shield]: https://img.shields.io/github/license/JorgeBarMza/repo.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [license-url]: https://github.com/JorgeBarMza/n-body-simulation/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
