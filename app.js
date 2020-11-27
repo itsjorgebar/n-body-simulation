@@ -4,12 +4,16 @@
 
 // Imports
 var $ = require('jquery')
-var THREE = require('three')
+
 var odex = require('odex');
-const { data } = require('jquery');
+
+var THREE = require('three')
+const MeshLine = require('three.meshline').MeshLine;
+const MeshLineMaterial = require('three.meshline').MeshLineMaterial;
 const { Vector3, Raycaster, Vector2 } = require('three');
 var OrbitControls = require('three-orbit-controls')(THREE);
 var { EffectComposer, EffectPass, RenderPass, OutlineEffect, BlendFunction } = require('postprocessing');
+
 var Dat = require('dat.gui');
 var init = require('three-dat.gui');
 
@@ -17,7 +21,6 @@ var init = require('three-dat.gui');
 let raycaster = new Raycaster(), selectedObject = null, effect = null, pass = null, selection = [];
 
 // three-dat gui
-
 init(Dat);
 
 // Canvas globals
@@ -36,6 +39,7 @@ let renderer = null,
   dims = 3, // x,y,z
   eqs = 2, // acceleration and velocity. 
   bodies = [],
+  trailList = [],
   arrowList = [];
 
 // *****************************************************************************
@@ -53,7 +57,7 @@ function getRandomColor() {
 
 // Returns an array of args for the setLength function of an ArrowHelper.
 function arrowLength(v) {
-  return [v.length() * 4, v.length() * 4 / 6, v.length() * 4 / 12];
+  return [v.length() * 3, v.length() * 4 / 6, v.length() * 4 / 12];
 }
 
 // Returns all body indices except a.
@@ -80,12 +84,6 @@ function getVelocity(y, body) {
 function toggleSimulation() {
   //let button = document.getElementById("simulate");
   simulate = !simulate;
-  /*
-  if (simulate) {
-    button.innerHTML = "Stop";
-  } else {
-    button.innerHTML = "Start";
-  }*/
 }
 
 class Body {
@@ -96,9 +94,10 @@ class Body {
     // Mesh.
     // TODO: make first arg proportional to mass.
     let geometry = new THREE.SphereGeometry(0.8, 20, 20);
-    let material = new THREE.MeshPhongMaterial({ color: getRandomColor() });
+    let material = new THREE.MeshPhongMaterial({ color: this.color });
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.position.set(rx, ry, rz);
+    this.mesh.name = "Body";
 
     // Velocity arrow.
     let velocity = new THREE.Vector3(vx,vy,vz);
@@ -126,6 +125,45 @@ class Body {
     this.velocity = v;
     this.arrowV.setDirection(v.clone().normalize());
     this.arrowV.setLength(...arrowLength(v));
+  }
+}
+
+
+class Trail { 
+  constructor(rX, rY, rZ, colour){
+      // Set the size of the trail
+      this.trail_lenght = 400;
+
+      // Create the line geometry used for storing verticies
+      this.trail_geometry = new THREE.Geometry();
+
+      // Must initialize it to the number of positions it will keep or it will throw an error
+      for (var i = 0; i < this.trail_lenght; i++) { 
+          this.trail_geometry.vertices.push(new THREE.Vector3(rX,rY,rZ));
+      }
+  
+      // Create the line mesh
+      this.trail_line = new MeshLine();
+      this.trail_line.setGeometry( this.trail_geometry,  function( p ) { return p; }  ); // makes width taper
+  
+      // Specify the canvas size (REQUIRED by library)
+      var resolution = new THREE.Vector2( window.innerWidth, window.innerHeight );
+  
+      // Create the line material
+      this.trail_material = new MeshLineMaterial( {
+          color: colour,
+          opacity: 0.5,
+          resolution: resolution,
+          sizeAttenuation: 1,
+          lineWidth: 0.2,
+          depthTest: false,
+          blending: THREE.AdditiveBlending,
+          transparent: false,
+          side: THREE.DoubleSide
+      });
+      this.trail_mesh = new THREE.Mesh( this.trail_line.geometry, this.trail_material ); 
+      this.trail_mesh.name = "Trail";
+      this.trail_mesh.frustumCulled = false;
   }
 }
 
@@ -198,8 +236,12 @@ function solve(y0) {
   iter = 0;
   solution = [];
   let s = new odex.Solver(y0.length);
+  // Enable dense output to extract new positions and 
+  // velocities for each time step
   s.denseOutput = true;
-  timeEnd = 10; // seconds.
+
+  // Time end and start define duration
+  let timeEnd = 10; // seconds.
   s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (t,y) => {
       let time = parseFloat(t).toPrecision(2);
@@ -216,13 +258,17 @@ function run() {
   // Update bodies.
   if (simulate && Date.now() - tLastUpdate > deltaT) {
     let y = solution[iter][1]; // index 0 is time, 1 is y values.
-    bodies.forEach(body => {
+    bodies.forEach(function(body,i) {
       // Update position
       body.mesh.position.set(y[body.irx], y[body.iry], y[body.irz]);
 
       // Update velocity arrow.
       let v = getVelocity(y,body);
       body.updateVelocity(v);
+
+      // Update trail line, push new body position
+      trailList[i].trail_line.advance(body.mesh.position);
+
     });
     ++iter;
     if (iter == solution.length) {
@@ -292,11 +338,17 @@ function serializeBodies() {
 
 // Display initial bodies configuration.
 function createBodies() {
-  // Remove old bodies.
+  // Remove all old bodies.
   bodies.forEach(body => {
     scene.remove(body.mesh);
   });
   bodies = [];
+
+  // Remove all old trails
+  trailList.forEach(trail => {
+    scene.remove(trail.trail_mesh);
+  });
+  trailList = [];
 
   // Define initial values.  arXiv:math/0011268
   let r = [];
@@ -323,10 +375,22 @@ function createBodies() {
   bodies.push(b3);
   scene.add(b3.mesh);
 
+
+  // Add default trails to scene
+  let t1 = new Trail(...r[0], b1.color);
+  trailList.push(t1);
+  scene.add(t1.trail_mesh);
+
+  let t2 = new Trail(...r[1], b2.color);
+  trailList.push(t2);
+  scene.add(t2.trail_mesh);
+
+  let t3 = new Trail(...r[2], b3.color);
+  trailList.push(t3);
+  scene.add(t3.trail_mesh);
+
   return serializeBodies();
 }
-
-
 
 function createUI() {
   let rx, ry, rz, vx, vy, vz, mass;
@@ -339,6 +403,11 @@ function createUI() {
       let b = new Body(...args);
       bodies.push(b);
       scene.add(b.mesh)
+
+      // Add Trail 
+      let t = new Trail(rx,ry,rz, b.color);
+      trailList.push(t);
+      scene.add(t.trail_mesh);
 
       // Compute simulation.
       let y0 = serializeBodies();
@@ -365,8 +434,18 @@ function createUI() {
     removeBody: function () {
       if (bodies.length == 0) return;
       simulate = false;
+
+      // Remove last body from scene
       scene.remove(bodies[bodies.length - 1].mesh);
+
+      // Remove last trail from scene
+      scene.remove(trailList[trailList.length - 1].trail_mesh);
+
+      // Remove body and trail from their respective lists
       bodies.pop();
+      trailList.pop();
+
+      // Set up initial variable array for simulation
       let y0 = serializeBodies();
       solve(y0);
       simulate = true;
@@ -439,14 +518,11 @@ function createUI() {
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(scene.children, true); //!
-    console.log(intersects.length);
     if (intersects.length > 0) {
       const object = intersects[0].object;
 
       if (object !== undefined) {
-        console.log("intersected!", object);
         selectedObject = object;
-        //console.log(selectedObject.children.length);
         handleSelection();
       }
     }
@@ -464,15 +540,12 @@ function createUI() {
     } else {
       selection.clear();
     }
-    //selection.clear();
-    //scene.updateMatrixWorld();
   }
 
   // handle 
   renderer.domElement.addEventListener("pointermove", () => {
     if (simulate) {
       rayCast(event);
-      //handleSelection();
     }
   });
 
@@ -490,16 +563,10 @@ function createUI() {
       const object = intersects[0].object;
 
       if (object != undefined) {
-        //console.log("the camera is", camera);
-
-        console.log("The object is", object.position);
         let target = object.position;
         camera.lookAt(target);
         orbitControls.target = target;
-        console.log(orbitControls.target);
-        //intersects[0].object.callback();
       }
-
     }
   });
 }
@@ -514,7 +581,11 @@ function createScene(canvas) {
 function resetSimulation() {
   simulate = true;
   toggleSimulation();
-  camera.target.set(0, 0, 0);
+  camera.position.set(0, 5, 18);
+  let v = new Vector3(0,0,0)
+  camera.lookAt(v);
+  console.log(camera);
+
   let y0 = createBodies();
   solve(y0);
 }

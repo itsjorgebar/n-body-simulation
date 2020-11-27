@@ -5,12 +5,16 @@
 
 // Imports
 var $ = require('jquery')
-var THREE = require('three')
+
 var odex = require('odex');
-const { data } = require('jquery');
+
+var THREE = require('three')
+const MeshLine = require('three.meshline').MeshLine;
+const MeshLineMaterial = require('three.meshline').MeshLineMaterial;
 const { Vector3, Raycaster, Vector2 } = require('three');
 var OrbitControls = require('three-orbit-controls')(THREE);
 var { EffectComposer, EffectPass, RenderPass, OutlineEffect, BlendFunction } = require('postprocessing');
+
 var Dat = require('dat.gui');
 var init = require('three-dat.gui');
 
@@ -18,7 +22,6 @@ var init = require('three-dat.gui');
 let raycaster = new Raycaster(), selectedObject = null, effect = null, pass = null, selection = [];
 
 // three-dat gui
-
 init(Dat);
 
 // Canvas globals
@@ -37,6 +40,7 @@ let renderer = null,
   dims = 3, // x,y,z
   eqs = 2, // acceleration and velocity. 
   bodies = [],
+  trailList = [],
   arrowList = [];
 
 // *****************************************************************************
@@ -54,7 +58,7 @@ function getRandomColor() {
 
 // Returns an array of args for the setLength function of an ArrowHelper.
 function arrowLength(v) {
-  return [v.length() * 4, v.length() * 4 / 6, v.length() * 4 / 12];
+  return [v.length() * 3, v.length() * 4 / 6, v.length() * 4 / 12];
 }
 
 // Returns all body indices except a.
@@ -81,12 +85,6 @@ function getVelocity(y, body) {
 function toggleSimulation() {
   //let button = document.getElementById("simulate");
   simulate = !simulate;
-  /*
-  if (simulate) {
-    button.innerHTML = "Stop";
-  } else {
-    button.innerHTML = "Start";
-  }*/
 }
 
 class Body {
@@ -97,9 +95,10 @@ class Body {
     // Mesh.
     // TODO: make first arg proportional to mass.
     let geometry = new THREE.SphereGeometry(0.8, 20, 20);
-    let material = new THREE.MeshPhongMaterial({ color: getRandomColor() });
+    let material = new THREE.MeshPhongMaterial({ color: this.color });
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.position.set(rx, ry, rz);
+    this.mesh.name = "Body";
 
     // Velocity arrow.
     let velocity = new THREE.Vector3(vx,vy,vz);
@@ -127,6 +126,45 @@ class Body {
     this.velocity = v;
     this.arrowV.setDirection(v.clone().normalize());
     this.arrowV.setLength(...arrowLength(v));
+  }
+}
+
+
+class Trail { 
+  constructor(rX, rY, rZ, colour){
+      // Set the size of the trail
+      this.trail_lenght = 400;
+
+      // Create the line geometry used for storing verticies
+      this.trail_geometry = new THREE.Geometry();
+
+      // Must initialize it to the number of positions it will keep or it will throw an error
+      for (var i = 0; i < this.trail_lenght; i++) { 
+          this.trail_geometry.vertices.push(new THREE.Vector3(rX,rY,rZ));
+      }
+  
+      // Create the line mesh
+      this.trail_line = new MeshLine();
+      this.trail_line.setGeometry( this.trail_geometry,  function( p ) { return p; }  ); // makes width taper
+  
+      // Specify the canvas size (REQUIRED by library)
+      var resolution = new THREE.Vector2( window.innerWidth, window.innerHeight );
+  
+      // Create the line material
+      this.trail_material = new MeshLineMaterial( {
+          color: colour,
+          opacity: 0.5,
+          resolution: resolution,
+          sizeAttenuation: 1,
+          lineWidth: 0.2,
+          depthTest: false,
+          blending: THREE.AdditiveBlending,
+          transparent: false,
+          side: THREE.DoubleSide
+      });
+      this.trail_mesh = new THREE.Mesh( this.trail_line.geometry, this.trail_material ); 
+      this.trail_mesh.name = "Trail";
+      this.trail_mesh.frustumCulled = false;
   }
 }
 
@@ -199,8 +237,12 @@ function solve(y0) {
   iter = 0;
   solution = [];
   let s = new odex.Solver(y0.length);
+  // Enable dense output to extract new positions and 
+  // velocities for each time step
   s.denseOutput = true;
-  timeEnd = 10; // seconds.
+
+  // Time end and start define duration
+  let timeEnd = 10; // seconds.
   s.solve(NBody, 0, y0, timeEnd, 
     s.grid(deltaT, (t,y) => {
       let time = parseFloat(t).toPrecision(2);
@@ -217,13 +259,17 @@ function run() {
   // Update bodies.
   if (simulate && Date.now() - tLastUpdate > deltaT) {
     let y = solution[iter][1]; // index 0 is time, 1 is y values.
-    bodies.forEach(body => {
+    bodies.forEach(function(body,i) {
       // Update position
       body.mesh.position.set(y[body.irx], y[body.iry], y[body.irz]);
 
       // Update velocity arrow.
       let v = getVelocity(y,body);
       body.updateVelocity(v);
+
+      // Update trail line, push new body position
+      trailList[i].trail_line.advance(body.mesh.position);
+
     });
     ++iter;
     if (iter == solution.length) {
@@ -293,11 +339,17 @@ function serializeBodies() {
 
 // Display initial bodies configuration.
 function createBodies() {
-  // Remove old bodies.
+  // Remove all old bodies.
   bodies.forEach(body => {
     scene.remove(body.mesh);
   });
   bodies = [];
+
+  // Remove all old trails
+  trailList.forEach(trail => {
+    scene.remove(trail.trail_mesh);
+  });
+  trailList = [];
 
   // Define initial values.  arXiv:math/0011268
   let r = [];
@@ -324,10 +376,22 @@ function createBodies() {
   bodies.push(b3);
   scene.add(b3.mesh);
 
+
+  // Add default trails to scene
+  let t1 = new Trail(...r[0], b1.color);
+  trailList.push(t1);
+  scene.add(t1.trail_mesh);
+
+  let t2 = new Trail(...r[1], b2.color);
+  trailList.push(t2);
+  scene.add(t2.trail_mesh);
+
+  let t3 = new Trail(...r[2], b3.color);
+  trailList.push(t3);
+  scene.add(t3.trail_mesh);
+
   return serializeBodies();
 }
-
-
 
 function createUI() {
   let rx, ry, rz, vx, vy, vz, mass;
@@ -340,6 +404,11 @@ function createUI() {
       let b = new Body(...args);
       bodies.push(b);
       scene.add(b.mesh)
+
+      // Add Trail 
+      let t = new Trail(rx,ry,rz, b.color);
+      trailList.push(t);
+      scene.add(t.trail_mesh);
 
       // Compute simulation.
       let y0 = serializeBodies();
@@ -366,8 +435,18 @@ function createUI() {
     removeBody: function () {
       if (bodies.length == 0) return;
       simulate = false;
+
+      // Remove last body from scene
       scene.remove(bodies[bodies.length - 1].mesh);
+
+      // Remove last trail from scene
+      scene.remove(trailList[trailList.length - 1].trail_mesh);
+
+      // Remove body and trail from their respective lists
       bodies.pop();
+      trailList.pop();
+
+      // Set up initial variable array for simulation
       let y0 = serializeBodies();
       solve(y0);
       simulate = true;
@@ -440,14 +519,11 @@ function createUI() {
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(scene.children, true); //!
-    console.log(intersects.length);
     if (intersects.length > 0) {
       const object = intersects[0].object;
 
       if (object !== undefined) {
-        console.log("intersected!", object);
         selectedObject = object;
-        //console.log(selectedObject.children.length);
         handleSelection();
       }
     }
@@ -465,15 +541,12 @@ function createUI() {
     } else {
       selection.clear();
     }
-    //selection.clear();
-    //scene.updateMatrixWorld();
   }
 
   // handle 
   renderer.domElement.addEventListener("pointermove", () => {
     if (simulate) {
       rayCast(event);
-      //handleSelection();
     }
   });
 
@@ -491,16 +564,10 @@ function createUI() {
       const object = intersects[0].object;
 
       if (object != undefined) {
-        //console.log("the camera is", camera);
-
-        console.log("The object is", object.position);
         let target = object.position;
         camera.lookAt(target);
         orbitControls.target = target;
-        console.log(orbitControls.target);
-        //intersects[0].object.callback();
       }
-
     }
   });
 }
@@ -515,11 +582,16 @@ function createScene(canvas) {
 function resetSimulation() {
   simulate = true;
   toggleSimulation();
-  camera.target.set(0, 0, 0);
+  camera.position.set(0, 5, 18);
+  let v = new Vector3(0,0,0)
+  camera.lookAt(v);
+  console.log(camera);
+
   let y0 = createBodies();
   solve(y0);
 }
-},{"dat.gui":2,"jquery":3,"odex":4,"postprocessing":5,"three":8,"three-dat.gui":6,"three-orbit-controls":7}],2:[function(require,module,exports){
+
+},{"dat.gui":2,"jquery":3,"odex":4,"postprocessing":5,"three":9,"three-dat.gui":6,"three-orbit-controls":7,"three.meshline":8}],2:[function(require,module,exports){
 /**
  * dat-gui JavaScript Controller Library
  * http://code.google.com/p/dat-gui
@@ -22275,7 +22347,7 @@ exports.Solver = Solver;
 
 })));
 
-},{"three":8}],6:[function(require,module,exports){
+},{"three":9}],6:[function(require,module,exports){
 !function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e=e||self).Events=t()}(this,(function(){"use strict";var e=["Light","Mesh","Object3D"],t=function(e,t,o,a){var r={};r[o[0]]={r:255*e[o[0]].r,g:255*e[o[0]].g,b:255*e[o[0]].b},t.addColor(r,o[0],o[1]).onChange((function(t){e[o[0]].r=t.r/255,e[o[0]].g=t.g/255,e[o[0]].b=t.b/255,a&&a(t)}))},o=function(t,o,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];if(t&&o.children.length>0){var n=r?a:a.addFolder("children");o.children.forEach((function(t,o){for(var a=0;a<e.length;a++){var r=e[a];if(t["is".concat(r)]){var i=t.name?t.name+"-"+o:t.type+"-"+o;n["add".concat(r)](i,t,{recursive:!0});break}}}))}},a=[["aoMapIntensity",0,1],["bumpScale",0,1],["clearCoat",0,1],["clearCoatRoughness",0,1],["color","color"],["displacementScale",0,10],["emissive","color"],["emissiveIntensity",0,1],["envMapIntensity",0,1],["lightMapIntensity",0,1],["metalness",0,1],["opacity",0,1],["reflectivity",0,1],["refractionRatio",0,1],["roughness",0,1],["shininess",0,1],["specular","color"],["wireframe",!0]],r=[["angle",0,Math.PI/2],["color","color"],["decay",0,2],["distance",0,1e3],["groundColor","color"],["intensity",0,5],["penumbra",0,1],["power",0,8*Math.PI]],n=[["bottom",0],["far",0],["filmGauge",0],["filmOffset",0],["focus",0],["fov",0,180],["left",0],["near",0],["right",0],["top",0],["zoom",0]],i=[["background","color"],["fog","fog"],["overrideMaterial","material"]],d=[["color","color"],["far",0],["near",0],["density",0]],c={addVector:function(e,t){var o=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{},a=o.step,r=void 0===a?.1:a,n=this.addFolder(e);return Math.abs(t.x)>=0&&n.add(t,"x").step(r),Math.abs(t.y)>=0&&n.add(t,"y").step(r),Math.abs(t.z)>=0&&n.add(t,"z").step(r),Math.abs(t.w)>=0&&n.add(t,"w").step(r),n},addObject3D:function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{},r=a.recursive,n=void 0!==r&&r,i=a.inner,d=void 0!==i&&i,c=a.stepPosition,s=void 0===c?1:c,l=a.stepRotation,f=void 0===l?.02:l,u=a.stepScale,h=void 0===u?.01:u,v=!1===d?this.addFolder(e):this;return v.addVector("position",t.position,s),v.addVector("rotation",t.rotation,f),v.addVector("scale",t.scale,h),o(n,t,v),v},addMaterial:function(e,o){var r=this.addFolder(e);return a.forEach((function(e){o.hasOwnProperty(e[0])&&("color"===e[1]?t(o,r,e,(function(){return o.needsUpdate=!0})):r.add(o,e[0],e[1],e[2]).onChange((function(){return o.needsUpdate=!0})))})),r},addLight:function(e,o){var a=this.addFolder(e);return a.addObject3D(null,o,{inner:!0}),r.forEach((function(e){o.hasOwnProperty(e[0])&&("color"===e[1]?t(o,a,e):a.add(o,e[0],e[1],e[2]))})),a},addCamera:function(e,o){var a=this.addFolder(e);return a.addObject3D("object",o,{inner:!0}),n.forEach((function(e){o.hasOwnProperty(e[0])&&("color"===e[1]?t(o,a,e):a.add(o,e[0],e[1],e[2]).onChange((function(){o.updateProjectionMatrix&&o.updateProjectionMatrix()})))})),a},addScene:function(e,a){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{},n=r.recursive,d=void 0!==n&&n,c=this.addFolder(e);return i.forEach((function(e){if(a.hasOwnProperty(e[0])&&null!==a[e[0]])switch(e[1]){case"color":t(a,c,e,(function(){return a.needsUpdate=!0}));break;case"fog":c.addFog(e[0],a[e[0]]);break;case"material":c.addMaterial(e[0],a[e[0]]);break;default:c.add(a[e[0]],e[0],e[1],e[2])}})),o(d,a,c,!0),c},addMesh:function(e,t){var o=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{},a=o.recursive,r=void 0!==a&&a,n=this.addFolder(e);n.addMaterial("material",t.material),n.addObject3D("object",t,{inner:!0,recursive:r})},addFog:function(e,o){var a=this.addFolder(e);return d.forEach((function(e){o.hasOwnProperty(e[0])&&("color"===e[1]?t(o,a,e):a.add(o,e[0],e[1],e[2],e[3]))})),a}};return function(e){var t=e.GUI.prototype;Object.keys(c).forEach((function(e){var o=c[e];t[e]?console.warn('three-dat.gui: The method "'.concat(o.name,"\" already exist. Check compatibility or check if three-dat.gui hasn't been imported twice.")):t[e]=o}))}}));
 
 },{}],7:[function(require,module,exports){
@@ -23301,6 +23373,728 @@ module.exports = function( THREE ) {
 };
 
 },{}],8:[function(require,module,exports){
+;(function() {
+  'use strict'
+
+  var root = this
+
+  var has_require = typeof require !== 'undefined'
+
+  var THREE = root.THREE || (has_require && require('three'))
+  if (!THREE) throw new Error('MeshLine requires three.js')
+
+  function MeshLine() {
+    THREE.BufferGeometry.call(this)
+    this.type = 'MeshLine'
+
+    this.positions = []
+
+    this.previous = []
+    this.next = []
+    this.side = []
+    this.width = []
+    this.indices_array = []
+    this.uvs = []
+    this.counters = []
+    this._points = []
+    this._geom = null
+
+    this.widthCallback = null
+
+    // Used to raycast
+    this.matrixWorld = new THREE.Matrix4()
+
+    Object.defineProperties(this, {
+      // this is now a bufferGeometry
+      // add getter to support previous api
+      geometry: {
+        enumerable: true,
+        get: function() {
+          return this
+        },
+      },
+      geom: {
+        enumerable: true,
+        get: function() {
+          return this._geom
+        },
+        set: function(value) {
+          this.setGeometry(value, this.widthCallback)
+        },
+      },
+      // for declaritive architectures
+      // to return the same value that sets the points
+      // eg. this.points = points
+      // console.log(this.points) -> points
+      points: {
+        enumerable: true,
+        get: function() {
+          return this._points
+        },
+        set: function(value) {
+          this.setPoints(value, this.widthCallback)
+        },
+      },
+    })
+  }
+
+  MeshLine.prototype = Object.create(THREE.BufferGeometry.prototype)
+  MeshLine.prototype.constructor = MeshLine
+  MeshLine.prototype.isMeshLine = true
+
+  MeshLine.prototype.setMatrixWorld = function(matrixWorld) {
+    this.matrixWorld = matrixWorld
+  }
+
+  // setting via a geometry is rather superfluous
+  // as you're creating a unecessary geometry just to throw away
+  // but exists to support previous api
+  MeshLine.prototype.setGeometry = function(g, c) {
+		// as the input geometry are mutated we store them
+		// for later retreival when necessary (declaritive architectures)
+		this._geometry = g;
+		if (g instanceof THREE.Geometry) {
+			this.setPoints(g.vertices, c);
+		} else if (g instanceof THREE.BufferGeometry) {
+			this.setPoints(g.getAttribute("position").array, c);
+		} else {
+			this.setPoints(g, c);
+		}
+  }
+
+  MeshLine.prototype.setPoints = function(points, wcb) {
+		if (!(points instanceof Float32Array) && !(points instanceof Array)) {
+			console.error(
+				"ERROR: The BufferArray of points is not instancied correctly."
+			);
+			return;
+		}
+		// as the points are mutated we store them
+		// for later retreival when necessary (declaritive architectures)
+		this._points = points;
+		this.widthCallback = wcb;
+		this.positions = [];
+		this.counters = [];
+		if (points.length && points[0] instanceof THREE.Vector3) {
+			// could transform Vector3 array into the array used below
+			// but this approach will only loop through the array once
+			// and is more performant
+			for (var j = 0; j < points.length; j++) {
+				var p = points[j];
+				var c = j / points.length;
+				this.positions.push(p.x, p.y, p.z);
+				this.positions.push(p.x, p.y, p.z);
+				this.counters.push(c);
+				this.counters.push(c);
+			}
+		} else {
+			for (var j = 0; j < points.length; j += 3) {
+				var c = j / points.length;
+				this.positions.push(points[j], points[j + 1], points[j + 2]);
+				this.positions.push(points[j], points[j + 1], points[j + 2]);
+				this.counters.push(c);
+				this.counters.push(c);
+			}
+		}
+		this.process();
+  }
+
+  function MeshLineRaycast(raycaster, intersects) {
+    var inverseMatrix = new THREE.Matrix4()
+    var ray = new THREE.Ray()
+    var sphere = new THREE.Sphere()
+    var interRay = new THREE.Vector3()
+    var geometry = this.geometry
+    // Checking boundingSphere distance to ray
+
+    sphere.copy(geometry.boundingSphere)
+    sphere.applyMatrix4(this.matrixWorld)
+
+    if (raycaster.ray.intersectSphere(sphere, interRay) === false) {
+      return
+    }
+
+    inverseMatrix.getInverse(this.matrixWorld)
+    ray.copy(raycaster.ray).applyMatrix4(inverseMatrix)
+
+    var vStart = new THREE.Vector3()
+    var vEnd = new THREE.Vector3()
+    var interSegment = new THREE.Vector3()
+    var step = this instanceof THREE.LineSegments ? 2 : 1
+    var index = geometry.index
+    var attributes = geometry.attributes
+
+    if (index !== null) {
+      var indices = index.array
+      var positions = attributes.position.array
+      var widths = attributes.width.array
+
+      for (var i = 0, l = indices.length - 1; i < l; i += step) {
+        var a = indices[i]
+        var b = indices[i + 1]
+
+        vStart.fromArray(positions, a * 3)
+        vEnd.fromArray(positions, b * 3)
+        var width = widths[Math.floor(i / 3)] != undefined ? widths[Math.floor(i / 3)] : 1
+        var precision = raycaster.params.Line.threshold + (this.material.lineWidth * width) / 2
+        var precisionSq = precision * precision
+
+        var distSq = ray.distanceSqToSegment(vStart, vEnd, interRay, interSegment)
+
+        if (distSq > precisionSq) continue
+
+        interRay.applyMatrix4(this.matrixWorld) //Move back to world space for distance calculation
+
+        var distance = raycaster.ray.origin.distanceTo(interRay)
+
+        if (distance < raycaster.near || distance > raycaster.far) continue
+
+        intersects.push({
+          distance: distance,
+          // What do we want? intersection point on the ray or on the segment??
+          // point: raycaster.ray.at( distance ),
+          point: interSegment.clone().applyMatrix4(this.matrixWorld),
+          index: i,
+          face: null,
+          faceIndex: null,
+          object: this,
+        })
+        // make event only fire once
+        i = l
+      }
+    }
+  }
+  MeshLine.prototype.raycast = MeshLineRaycast
+  MeshLine.prototype.compareV3 = function(a, b) {
+    var aa = a * 6
+    var ab = b * 6
+    return (
+      this.positions[aa] === this.positions[ab] &&
+      this.positions[aa + 1] === this.positions[ab + 1] &&
+      this.positions[aa + 2] === this.positions[ab + 2]
+    )
+  }
+
+  MeshLine.prototype.copyV3 = function(a) {
+    var aa = a * 6
+    return [this.positions[aa], this.positions[aa + 1], this.positions[aa + 2]]
+  }
+
+  MeshLine.prototype.process = function() {
+    var l = this.positions.length / 6
+
+    this.previous = []
+    this.next = []
+    this.side = []
+    this.width = []
+    this.indices_array = []
+    this.uvs = []
+
+    var w
+
+    var v
+    // initial previous points
+    if (this.compareV3(0, l - 1)) {
+      v = this.copyV3(l - 2)
+    } else {
+      v = this.copyV3(0)
+    }
+    this.previous.push(v[0], v[1], v[2])
+    this.previous.push(v[0], v[1], v[2])
+
+    for (var j = 0; j < l; j++) {
+      // sides
+      this.side.push(1)
+      this.side.push(-1)
+
+      // widths
+      if (this.widthCallback) w = this.widthCallback(j / (l - 1))
+      else w = 1
+      this.width.push(w)
+      this.width.push(w)
+
+      // uvs
+      this.uvs.push(j / (l - 1), 0)
+      this.uvs.push(j / (l - 1), 1)
+
+      if (j < l - 1) {
+        // points previous to poisitions
+        v = this.copyV3(j)
+        this.previous.push(v[0], v[1], v[2])
+        this.previous.push(v[0], v[1], v[2])
+
+        // indices
+        var n = j * 2
+        this.indices_array.push(n, n + 1, n + 2)
+        this.indices_array.push(n + 2, n + 1, n + 3)
+      }
+      if (j > 0) {
+        // points after poisitions
+        v = this.copyV3(j)
+        this.next.push(v[0], v[1], v[2])
+        this.next.push(v[0], v[1], v[2])
+      }
+    }
+
+    // last next point
+    if (this.compareV3(l - 1, 0)) {
+      v = this.copyV3(1)
+    } else {
+      v = this.copyV3(l - 1)
+    }
+    this.next.push(v[0], v[1], v[2])
+    this.next.push(v[0], v[1], v[2])
+
+    // redefining the attribute seems to prevent range errors
+    // if the user sets a differing number of vertices
+    if (!this._attributes || this._attributes.position.count !== this.positions.length) {
+      this._attributes = {
+        position: new THREE.BufferAttribute(new Float32Array(this.positions), 3),
+        previous: new THREE.BufferAttribute(new Float32Array(this.previous), 3),
+        next: new THREE.BufferAttribute(new Float32Array(this.next), 3),
+        side: new THREE.BufferAttribute(new Float32Array(this.side), 1),
+        width: new THREE.BufferAttribute(new Float32Array(this.width), 1),
+        uv: new THREE.BufferAttribute(new Float32Array(this.uvs), 2),
+        index: new THREE.BufferAttribute(new Uint16Array(this.indices_array), 1),
+        counters: new THREE.BufferAttribute(new Float32Array(this.counters), 1),
+      }
+    } else {
+      this._attributes.position.copyArray(new Float32Array(this.positions))
+      this._attributes.position.needsUpdate = true
+      this._attributes.previous.copyArray(new Float32Array(this.previous))
+      this._attributes.previous.needsUpdate = true
+      this._attributes.next.copyArray(new Float32Array(this.next))
+      this._attributes.next.needsUpdate = true
+      this._attributes.side.copyArray(new Float32Array(this.side))
+      this._attributes.side.needsUpdate = true
+      this._attributes.width.copyArray(new Float32Array(this.width))
+      this._attributes.width.needsUpdate = true
+      this._attributes.uv.copyArray(new Float32Array(this.uvs))
+      this._attributes.uv.needsUpdate = true
+      this._attributes.index.copyArray(new Uint16Array(this.indices_array))
+      this._attributes.index.needsUpdate = true
+    }
+
+    this.setAttribute('position', this._attributes.position)
+    this.setAttribute('previous', this._attributes.previous)
+    this.setAttribute('next', this._attributes.next)
+    this.setAttribute('side', this._attributes.side)
+    this.setAttribute('width', this._attributes.width)
+    this.setAttribute('uv', this._attributes.uv)
+    this.setAttribute('counters', this._attributes.counters)
+
+    this.setIndex(this._attributes.index)
+
+    this.computeBoundingSphere()
+    this.computeBoundingBox()
+  }
+
+  function memcpy(src, srcOffset, dst, dstOffset, length) {
+    var i
+
+    src = src.subarray || src.slice ? src : src.buffer
+    dst = dst.subarray || dst.slice ? dst : dst.buffer
+
+    src = srcOffset
+      ? src.subarray
+        ? src.subarray(srcOffset, length && srcOffset + length)
+        : src.slice(srcOffset, length && srcOffset + length)
+      : src
+
+    if (dst.set) {
+      dst.set(src, dstOffset)
+    } else {
+      for (i = 0; i < src.length; i++) {
+        dst[i + dstOffset] = src[i]
+      }
+    }
+
+    return dst
+  }
+
+  /**
+   * Fast method to advance the line by one position.  The oldest position is removed.
+   * @param position
+   */
+  MeshLine.prototype.advance = function(position) {
+    var positions = this._attributes.position.array
+    var previous = this._attributes.previous.array
+    var next = this._attributes.next.array
+    var l = positions.length
+
+    // PREVIOUS
+    memcpy(positions, 0, previous, 0, l)
+
+    // POSITIONS
+    memcpy(positions, 6, positions, 0, l - 6)
+
+    positions[l - 6] = position.x
+    positions[l - 5] = position.y
+    positions[l - 4] = position.z
+    positions[l - 3] = position.x
+    positions[l - 2] = position.y
+    positions[l - 1] = position.z
+
+    // NEXT
+    memcpy(positions, 6, next, 0, l - 6)
+
+    next[l - 6] = position.x
+    next[l - 5] = position.y
+    next[l - 4] = position.z
+    next[l - 3] = position.x
+    next[l - 2] = position.y
+    next[l - 1] = position.z
+
+    this._attributes.position.needsUpdate = true
+    this._attributes.previous.needsUpdate = true
+    this._attributes.next.needsUpdate = true
+  }
+
+  THREE.ShaderChunk['meshline_vert'] = [
+    '',
+    THREE.ShaderChunk.logdepthbuf_pars_vertex,
+    THREE.ShaderChunk.fog_pars_vertex,
+    '',
+    'attribute vec3 previous;',
+    'attribute vec3 next;',
+    'attribute float side;',
+    'attribute float width;',
+    'attribute float counters;',
+    '',
+    'uniform vec2 resolution;',
+    'uniform float lineWidth;',
+    'uniform vec3 color;',
+    'uniform float opacity;',
+    'uniform float sizeAttenuation;',
+    '',
+    'varying vec2 vUV;',
+    'varying vec4 vColor;',
+    'varying float vCounters;',
+    '',
+    'vec2 fix( vec4 i, float aspect ) {',
+    '',
+    '    vec2 res = i.xy / i.w;',
+    '    res.x *= aspect;',
+    '	 vCounters = counters;',
+    '    return res;',
+    '',
+    '}',
+    '',
+    'void main() {',
+    '',
+    '    float aspect = resolution.x / resolution.y;',
+    '',
+    '    vColor = vec4( color, opacity );',
+    '    vUV = uv;',
+    '',
+    '    mat4 m = projectionMatrix * modelViewMatrix;',
+    '    vec4 finalPosition = m * vec4( position, 1.0 );',
+    '    vec4 prevPos = m * vec4( previous, 1.0 );',
+    '    vec4 nextPos = m * vec4( next, 1.0 );',
+    '',
+    '    vec2 currentP = fix( finalPosition, aspect );',
+    '    vec2 prevP = fix( prevPos, aspect );',
+    '    vec2 nextP = fix( nextPos, aspect );',
+    '',
+    '    float w = lineWidth * width;',
+    '',
+    '    vec2 dir;',
+    '    if( nextP == currentP ) dir = normalize( currentP - prevP );',
+    '    else if( prevP == currentP ) dir = normalize( nextP - currentP );',
+    '    else {',
+    '        vec2 dir1 = normalize( currentP - prevP );',
+    '        vec2 dir2 = normalize( nextP - currentP );',
+    '        dir = normalize( dir1 + dir2 );',
+    '',
+    '        vec2 perp = vec2( -dir1.y, dir1.x );',
+    '        vec2 miter = vec2( -dir.y, dir.x );',
+    '        //w = clamp( w / dot( miter, perp ), 0., 4. * lineWidth * width );',
+    '',
+    '    }',
+    '',
+    '    //vec2 normal = ( cross( vec3( dir, 0. ), vec3( 0., 0., 1. ) ) ).xy;',
+    '    vec4 normal = vec4( -dir.y, dir.x, 0., 1. );',
+    '    normal.xy *= .5 * w;',
+    '    normal *= projectionMatrix;',
+    '    if( sizeAttenuation == 0. ) {',
+    '        normal.xy *= finalPosition.w;',
+    '        normal.xy /= ( vec4( resolution, 0., 1. ) * projectionMatrix ).xy;',
+    '    }',
+    '',
+    '    finalPosition.xy += normal.xy * side;',
+    '',
+    '    gl_Position = finalPosition;',
+    '',
+    THREE.ShaderChunk.logdepthbuf_vertex,
+    THREE.ShaderChunk.fog_vertex && '    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );',
+    THREE.ShaderChunk.fog_vertex,
+    '}',
+  ].join('\n')
+
+  THREE.ShaderChunk['meshline_frag'] = [
+    '',
+    THREE.ShaderChunk.fog_pars_fragment,
+    THREE.ShaderChunk.logdepthbuf_pars_fragment,
+    '',
+    'uniform sampler2D map;',
+    'uniform sampler2D alphaMap;',
+    'uniform float useMap;',
+    'uniform float useAlphaMap;',
+    'uniform float useDash;',
+    'uniform float dashArray;',
+    'uniform float dashOffset;',
+    'uniform float dashRatio;',
+    'uniform float visibility;',
+    'uniform float alphaTest;',
+    'uniform vec2 repeat;',
+    '',
+    'varying vec2 vUV;',
+    'varying vec4 vColor;',
+    'varying float vCounters;',
+    '',
+    'void main() {',
+    '',
+    THREE.ShaderChunk.logdepthbuf_fragment,
+    '',
+    '    vec4 c = vColor;',
+    '    if( useMap == 1. ) c *= texture2D( map, vUV * repeat );',
+    '    if( useAlphaMap == 1. ) c.a *= texture2D( alphaMap, vUV * repeat ).a;',
+    '    if( c.a < alphaTest ) discard;',
+    '    if( useDash == 1. ){',
+    '        c.a *= ceil(mod(vCounters + dashOffset, dashArray) - (dashArray * dashRatio));',
+    '    }',
+    '    gl_FragColor = c;',
+    '    gl_FragColor.a *= step(vCounters, visibility);',
+    '',
+    THREE.ShaderChunk.fog_fragment,
+    '}',
+  ].join('\n')
+
+  function MeshLineMaterial(parameters) {
+    THREE.ShaderMaterial.call(this, {
+      uniforms: Object.assign({}, THREE.UniformsLib.fog, {
+        lineWidth: { value: 1 },
+        map: { value: null },
+        useMap: { value: 0 },
+        alphaMap: { value: null },
+        useAlphaMap: { value: 0 },
+        color: { value: new THREE.Color(0xffffff) },
+        opacity: { value: 1 },
+        resolution: { value: new THREE.Vector2(1, 1) },
+        sizeAttenuation: { value: 1 },
+        dashArray: { value: 0 },
+        dashOffset: { value: 0 },
+        dashRatio: { value: 0.5 },
+        useDash: { value: 0 },
+        visibility: { value: 1 },
+        alphaTest: { value: 0 },
+        repeat: { value: new THREE.Vector2(1, 1) },
+      }),
+
+      vertexShader: THREE.ShaderChunk.meshline_vert,
+
+      fragmentShader: THREE.ShaderChunk.meshline_frag,
+    })
+
+    this.type = 'MeshLineMaterial'
+
+    Object.defineProperties(this, {
+      lineWidth: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.lineWidth.value
+        },
+        set: function(value) {
+          this.uniforms.lineWidth.value = value
+        },
+      },
+      map: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.map.value
+        },
+        set: function(value) {
+          this.uniforms.map.value = value
+        },
+      },
+      useMap: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.useMap.value
+        },
+        set: function(value) {
+          this.uniforms.useMap.value = value
+        },
+      },
+      alphaMap: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.alphaMap.value
+        },
+        set: function(value) {
+          this.uniforms.alphaMap.value = value
+        },
+      },
+      useAlphaMap: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.useAlphaMap.value
+        },
+        set: function(value) {
+          this.uniforms.useAlphaMap.value = value
+        },
+      },
+      color: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.color.value
+        },
+        set: function(value) {
+          this.uniforms.color.value = value
+        },
+      },
+      opacity: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.opacity.value
+        },
+        set: function(value) {
+          this.uniforms.opacity.value = value
+        },
+      },
+      resolution: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.resolution.value
+        },
+        set: function(value) {
+          this.uniforms.resolution.value.copy(value)
+        },
+      },
+      sizeAttenuation: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.sizeAttenuation.value
+        },
+        set: function(value) {
+          this.uniforms.sizeAttenuation.value = value
+        },
+      },
+      dashArray: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.dashArray.value
+        },
+        set: function(value) {
+          this.uniforms.dashArray.value = value
+          this.useDash = value !== 0 ? 1 : 0
+        },
+      },
+      dashOffset: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.dashOffset.value
+        },
+        set: function(value) {
+          this.uniforms.dashOffset.value = value
+        },
+      },
+      dashRatio: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.dashRatio.value
+        },
+        set: function(value) {
+          this.uniforms.dashRatio.value = value
+        },
+      },
+      useDash: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.useDash.value
+        },
+        set: function(value) {
+          this.uniforms.useDash.value = value
+        },
+      },
+      visibility: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.visibility.value
+        },
+        set: function(value) {
+          this.uniforms.visibility.value = value
+        },
+      },
+      alphaTest: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.alphaTest.value
+        },
+        set: function(value) {
+          this.uniforms.alphaTest.value = value
+        },
+      },
+      repeat: {
+        enumerable: true,
+        get: function() {
+          return this.uniforms.repeat.value
+        },
+        set: function(value) {
+          this.uniforms.repeat.value.copy(value)
+        },
+      },
+    })
+
+    this.setValues(parameters)
+  }
+
+  MeshLineMaterial.prototype = Object.create(THREE.ShaderMaterial.prototype)
+  MeshLineMaterial.prototype.constructor = MeshLineMaterial
+  MeshLineMaterial.prototype.isMeshLineMaterial = true
+
+  MeshLineMaterial.prototype.copy = function(source) {
+    THREE.ShaderMaterial.prototype.copy.call(this, source)
+
+    this.lineWidth = source.lineWidth
+    this.map = source.map
+    this.useMap = source.useMap
+    this.alphaMap = source.alphaMap
+    this.useAlphaMap = source.useAlphaMap
+    this.color.copy(source.color)
+    this.opacity = source.opacity
+    this.resolution.copy(source.resolution)
+    this.sizeAttenuation = source.sizeAttenuation
+    this.dashArray.copy(source.dashArray)
+    this.dashOffset.copy(source.dashOffset)
+    this.dashRatio.copy(source.dashRatio)
+    this.useDash = source.useDash
+    this.visibility = source.visibility
+    this.alphaTest = source.alphaTest
+    this.repeat.copy(source.repeat)
+
+    return this
+  }
+
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = {
+        MeshLine: MeshLine,
+        MeshLineMaterial: MeshLineMaterial,
+        MeshLineRaycast: MeshLineRaycast,
+      }
+    }
+    exports.MeshLine = MeshLine
+    exports.MeshLineMaterial = MeshLineMaterial
+    exports.MeshLineRaycast = MeshLineRaycast
+  } else {
+    root.MeshLine = MeshLine
+    root.MeshLineMaterial = MeshLineMaterial
+    root.MeshLineRaycast = MeshLineRaycast
+  }
+}.call(this))
+
+},{"three":9}],9:[function(require,module,exports){
 // threejs.org/license
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
