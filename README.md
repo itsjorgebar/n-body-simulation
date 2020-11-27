@@ -86,7 +86,9 @@ TODO: Add the rest.
 
 Movement is modelled by a sytem of nonlinear ordinary differential equations based on Newtonian mechanics. Numerical integration methods are suitable to obtain the position and velocity of all bodies at arbitrarilly chosen timesteps, this project uses the Gragg-Bulirsch-Stoer algorithm. 
 
-The system can be described by equating the net force on each object to the sum of gravitational pulls of all other bodies. This yields a system of second order ODEs where position as a function of time is the unknown variable. Each equation can be transformed into two first order ODEs, which facilitates the computations.  
+The system can be described by equating the net force on each object to the sum of gravitational pulls of all other bodies. This yields a system of second order ODEs where position as a function of time is the unknown variable. Each equation can be transformed into two first order ODEs, which facilitates the computations ([example](https://towardsdatascience.com/modelling-the-three-body-problem-in-classical-mechanics-using-python-9dc270ad7767)).  
+
+![](https://latex.codecogs.com/svg.latex?\large&space;F_{ij}=\frac{Gm_im_j}{{\|&space;r_j&space;-&space;r_i&space;\|}^2}&space;\cdot&space;\frac{(r_j&space;-&space;r_i)}{\|&space;r_j&space;-&space;r_i&space;\|}&space;=&space;\frac{Gm_im_j(r_j-r_i)}{{\|&space;r_j&space;-&space;r_i&space;\|}^3})
 
 <!- GETTING STARTED -->
 ## Getting Started
