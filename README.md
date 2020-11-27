@@ -109,7 +109,6 @@ Where each second order equation can be transformed into two first order ODEs.
 
 Hence, each body yields two vector equations, or six scalar equations in a 3D coordinate system. The numerical solver inegrates this system to obtain the velocity and position of all bodies as a function of time.  
 
-<!- GETTING STARTED -->
 ## Getting Started
 
 To get a local copy up and running follow these simple steps.
