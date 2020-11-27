@@ -134,7 +134,10 @@ To get a local copy up and running follow these simple steps.
    ```sh
    npm run build
    ```
-TODO: add liveserver step.
+4. Open the html file.
+   ```sh
+   open open n-body-simulation.html
+   ```
 
 <!-- LICENSE -->
 ## License
