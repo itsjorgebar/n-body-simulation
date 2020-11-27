@@ -87,7 +87,7 @@ TODO: Add the rest.
 The n-body problem consists of predicting the movement of n particles given their masses, initial positions, and velocities.
 
 Movement is influenced by gravitational force between the particles. 
-The force exerted from mass j and received by mass i is described by Newton's law of gravity:
+The force exerted from mass *j* and received by mass *i* is described by Newton's law of gravity:
 
 ![](https://latex.codecogs.com/svg.latex?\large&space;F_{ij}=\frac{Gm_im_j}{{\|&space;r_j&space;-&space;r_i&space;\|}^2}&space;\cdot&space;\frac{(r_j&space;-&space;r_i)}{\|&space;r_j&space;-&space;r_i&space;\|}&space;=&space;\frac{Gm_im_j(r_j-r_i)}{{\|&space;r_j&space;-&space;r_i&space;\|}^3})
 
