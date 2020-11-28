@@ -211,7 +211,7 @@ To get a local copy up and running follow these simple steps.
    ```
 4. Open the html file.
    ```sh
-   open open n-body-simulation.html
+   open n-body-simulation.html
    ```
 
 <!-- LICENSE -->
@@ -223,17 +223,15 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Contact
 
 Jorge Barrios - jorgebarmza@gmail.com
+
 Roberto Alejandro Gutierrez - rgtzgn@gmail.com
+
 Eduardo Barrios - a01020716@itesm.mx
 
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
 Thanks [Octavio Navarro](https://github.com/octavio-navarro) for providing valuable guidance and advice.
-
-
-
-
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
