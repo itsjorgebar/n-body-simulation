@@ -7,7 +7,7 @@
 ***
 ***
 *** To avoid retyping too much info. Do a search and replace for the following:
-*** JorgeBarMza, n-body-simulation, jorgebarmza@gmail.com, n-body simulation, An interactive 3D web app to visualize celestial mechanics.
+*** axgtz, rgtzgn@gmail.com, JorgeBarMza, n-body-simulation, jorgebarmza@gmail.com, n-body simulation, An interactive 3D web app to visualize celestial mechanics.
 -->
 
 
@@ -72,14 +72,15 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
 An interactive 3D web app that simulates a dynamical system of particles under the influence of gravity. 
 
 ### Built With
 
 * [ODEX](https://github.com/littleredcomputer/odex-js)
 * [Three.js](https://threejs.org/)
+* [Browserify](http://browserify.org/)
+* [ThreeDatGUI](https://www.npmjs.com/package/three-dat.gui)
+* [ThreeMeshLine](https://www.npmjs.com/package/three.meshline)
 
 ### THREE
 This project uses Three.js, a JavaScript API that expands on WebGL's engine and functionalities to create and display animated 3d graphics. You can find more information on [Three.js](https://threejs.org/).
@@ -133,6 +134,29 @@ pass = outlinePass;
 composer.addPass(outlinePass);
 ``` 
 The composer object, of the post-processing library of three.js, handles all of the passes in the scene. Having configured our outlineEffect, it is added to the composer which renders the scene with the new outlineEffect as one of its effect passes. For this effect to be visualized the composer must take the place of the renderer.
+
+#### The Trails
+The trails were done using Mesh Line an alterative to THREE.Line, it uses a trip of triangles billboarded to help us achieve the effect of a fading trail.
+
+```js
+this.trail_geometry = new THREE.Geometry();
+for (var i = 0; i < this.trail_lenght; i++) { 
+    this.trail_geometry.vertices.push(new THREE.Vector3(rX,rY,rZ));
+}
+
+this.trail_line = new MeshLine();
+this.trail_line.setGeometry( this.trail_geometry,  function( p ) { return p; }  );
+
+
+this.trail_material = new MeshLineMaterial( { properties});
+this.trail_mesh = new THREE.Mesh( this.trail_line.geometry, this.trail_material ); 
+``` 
+The trail mesh contains the geometry and material of the trail, which is composed of 400 vertices. 
+```js
+trailList[i].trail_line.advance(body.mesh.position);
+```
+To give the trail movement, the trail vertices position values need to be updated according to the particle is attached. The new position values of the particles are pushed with the function that can be seen above. This function works like a queue that updates the position values of the vertices and using FIFO the vertices are deleted, so the oldest one that was updated is deleted and the new one is pushed infront
+
 ### Math
 
 The n-body problem consists of predicting the movement of n particles given their masses, initial positions, and velocities.
@@ -199,6 +223,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Contact
 
 Jorge Barrios - jorgebarmza@gmail.com
+Roberto Alejandro Gutierrez - rgtzgn@gmail.com
+Eduardo Barrios - a01020716@itesm.mx
 
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
