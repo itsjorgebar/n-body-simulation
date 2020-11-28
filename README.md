@@ -80,8 +80,59 @@ An interactive 3D web app that simulates a dynamical system of particles under t
 
 * [ODEX](https://github.com/littleredcomputer/odex-js)
 * [Three.js](https://threejs.org/)
-TODO: Add the rest.
 
+### THREE
+This project uses Three.js, a JavaScript API that expands on WebGL's engine and functionalities to create and display animated 3d graphics. You can find more information on [Three.js](https://threejs.org/).
+
+We used the Three.js object constructors to create the scene, the lights, camera, trails, controls and post-processing effects. Which are readily available to use as part of the API.
+
+#### Setting up the scene
+```js
+scene = new THREE.Scene();
+scene.background = new THREE.Color("rgb(0, 0, 0)");
+
+camera = new THREE.PerspectiveCamera(45, canvas.width / canvasheight, 1, 4000);
+camera.position.set(0, 5, 18);
+scene.add(camera);
+
+orbitControls = new OrbitControls(camera, renderer.domElement);
+```
+Most of these variables need to be global in order to be manipulated easily as the scene evolves with new input of the user.
+
+#### The particle itself
+A mesh with a phong-effect texture and a spherical geometry represents our particle. That is created everytime our body constructor is called. 
+```js
+let geometry = new THREE.SphereGeometry(0.8, 20, 20);
+let material = new THREE.MeshPhongMaterial({ color: this.colo});
+this.mesh = new THREE.Mesh(geometry, material);
+this.mesh.position.set(rx, ry, rz);
+this.mesh.name = "Body";
+```
+Given the tridimensional coordinates provided by the user, we can add its location as a property of the body object relative to its parent object in which it will be added, in this case a group object that holds all our particles.
+
+The particle mesh is accompanied by a THREE.ArrowHelper, that represents the dynamic velocity of its particle.
+```js
+let velocity = new THREE.Vector3(vx,vy,vz);
+this.arrowV = new THREE.ArrowHelper(velocity.clone().normali(), 
+  THREE.Vector3(), 3, 0xff0000);
+this.arrowV.setLength(...arrowLength(velocity));
+this.mesh.add(this.arrowV);
+```
+It is also added to the particle mesh by default when our body constructor is called. It uses the initial velocities provided by the user to determine its initial length.
+#### The post-processing effect: Outline Pass
+Three.js comes with the tools to define "passes" to render the scene with additional post-processing effects. One of which is the OutlinePass.
+This effects "highlights" objects in the scene based on certain events that the user triggers. In this case, when he hovers over any particle in the scene.
+```js
+outlineEffect.selection.set(selection);
+composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const outlinePass = new EffectPass(camera, outlineEffect);
+
+effect = outlineEffect;
+pass = outlinePass;
+composer.addPass(outlinePass);
+``` 
+The composer object, of the post-processing library of three.js, handles all of the passes in the scene. Having configured our outlineEffect, it is added to the composer which renders the scene with the new outlineEffect as one of its effect passes. For this effect to be visualized the composer must take the place of the renderer.
 ### Math
 
 The n-body problem consists of predicting the movement of n particles given their masses, initial positions, and velocities.
