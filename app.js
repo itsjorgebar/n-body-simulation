@@ -288,7 +288,16 @@ function setupScene(canvas) {
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color("rgb(0, 0, 0)");
+  const loader = new THREE.CubeTextureLoader();
+  const texture = loader.load([
+    'assets/skybox/right.png',
+    'assets/skybox/left.png',
+    'assets/skybox/top.png',
+    'assets/skybox/bottom.png',
+    'assets/skybox/front.png',
+    'assets/skybox/back.png',
+  ]);
+  scene.background = texture;
 
   camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 4000);
   camera.position.set(0, 5, 18);

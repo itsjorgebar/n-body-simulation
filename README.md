@@ -205,13 +205,17 @@ To get a local copy up and running follow these simple steps.
    ```sh
    npm install
    ```
-2. Run the build
+3. Run the build
    ```sh
    npm run build
    ```
-4. Open the html file.
+4. Run a local server. Here's a Python 3 example, and there are [anlternatives](https://threejs.org/docs/#manual/en/introduction/How-to-run-things-locally).
    ```sh
-   open n-body-simulation.html
+   python -m http.server
+   ```
+5. Access the server by typing the following url in a browser address bar. 
+   ```sh
+   http://localhost:8000/
    ```
 
 <!-- LICENSE -->
