@@ -6,13 +6,18 @@ body{
 #title {
 	position:absolute;
 	left:20px;
-	top:20px;
+  top:20px;
+  font-family: Georgia, Courier, monospace;
+  font-size:larger;
 }
 
 #prompt {
 	position:absolute;
 	bottom:20px;
 	left:20px;
+  font-family: Georgia, Courier, monospace;
+  font-size:large;
+  color:lightgray;
 }
 
 .ui-button {

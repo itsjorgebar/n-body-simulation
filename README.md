@@ -51,7 +51,7 @@
       <a href="#about-the-project">About The Project</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
-        <li><a href="#built-with">Math</a></li>
+        <li><a href="#math">Math</a></li>
       </ul>
     </li>
     <li>

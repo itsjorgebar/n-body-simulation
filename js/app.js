@@ -22,6 +22,7 @@ let raycaster = new Raycaster(), selectedObject = null, effect = null, pass = nu
 
 // three-dat gui
 init(Dat);
+let playpause = null;
 
 // Canvas globals
 let renderer = null,
@@ -81,13 +82,8 @@ function getVelocity(y, body) {
   return new Vector3(y[body.ivx], y[body.ivy], y[body.ivz]);
 }
 
-function toggleSimulation() {
-  //let button = document.getElementById("simulate");
-  simulate = !simulate;
-}
-
 class Body {
-  constructor(mass, rx, ry, rz, vx, vy, vz) {
+  constructor(mass, rx, ry, rz, vx, vy, vz, showArrow=true) {
     this.color = getRandomColor();
     this.mass = mass;
 
@@ -106,6 +102,7 @@ class Body {
     this.arrowV.setLength(...arrowLength(velocity));
     this.mesh.add(this.arrowV);
     this.velocity = velocity;
+    this.arrowV.visible = showArrow;
     arrowList.push(this.arrowV);
 
     // Solution offsets.
@@ -190,7 +187,7 @@ function bodyAcc2(receiver, applier, y) {
 // Example: [r'x, r'y, r'z, v'x, v'y, v'z]
 function bodyEqsN(receiver, appliers, y) {
   // Obtain acceleration (v')
-  let netAcc = new THREE.Vector3(0, 0, 0);
+  let netAcc = new THREE.Vector3();
   appliers.forEach(applier => {
     let acc = bodyAcc2(receiver, applier, y);
     netAcc.add(acc);
@@ -288,6 +285,12 @@ function setupScene(canvas) {
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   scene = new THREE.Scene();
+  var onProgress = function ( xhr ) {
+    if ( xhr.lengthComputable ) {
+      var percentComplete = xhr.loaded / xhr.total * 100;
+      console.log( Math.round(percentComplete, 2) + '% downloaded' );
+    }
+  };
   const loader = new THREE.CubeTextureLoader();
   const texture = loader.load([
     'assets/skybox/right.png',
@@ -296,7 +299,7 @@ function setupScene(canvas) {
     'assets/skybox/bottom.png',
     'assets/skybox/front.png',
     'assets/skybox/back.png',
-  ]);
+  ], undefined, onProgress);
   scene.background = texture;
 
   camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 4000);
@@ -402,14 +405,13 @@ function createBodies() {
 }
 
 function createUI() {
-  let rx, ry, rz, vx, vy, vz, mass;
+  let rx = "0", ry = "0", rz = "0", vx = "1", vy = "1", vz = "0", mass = 1;
   
   function addbody() {
     if (mass && rx && ry && rz && vx && vy && vz) {
       // Create body.
       const args = [mass, rx, ry, rz, vx, vy, vz].map(k => parseFloat(k));
-      simulate = false;
-      let b = new Body(...args);
+      let b = new Body(...args, !simulate);
       bodies.push(b);
       scene.add(b.mesh)
 
@@ -421,28 +423,32 @@ function createUI() {
       // Compute simulation.
       let y0 = serializeBodies();
       solve(y0);
-      simulate = true;
     } else {
       alert("Body attributes haven't been specified.")
     }
   }
 
+  function toggleArrows() {
+    arrowList.forEach(e => e.visible = !e.visible);
+    scene.updateMatrixWorld();
+  }
+
   var options = {
     // control simulation
-    'start/stop': function () {
+    'Play / Pause': function () {
       simulate = !simulate;
+      toggleArrows();
     },
     // control reset simulation
-    reset: function () {
+    Reset: function () {
       resetSimulation();
     },
-    addBody: function () {
+    'Add body': function () {
       addbody();
     },
     // control to remove last particle
-    removeBody: function () {
+    'Remove body': function () {
       if (bodies.length == 0) return;
-      simulate = false;
 
       // Remove last body from scene
       scene.remove(bodies[bodies.length - 1].mesh);
@@ -457,7 +463,6 @@ function createUI() {
       // Set up initial variable array for simulation
       let y0 = serializeBodies();
       solve(y0);
-      simulate = true;
     },
     // control to listen to Display vectors
     checkboxVectors: true
@@ -465,13 +470,13 @@ function createUI() {
 
   // object for the textfields
   var input = {
-    rx: "",
-    ry: "",
-    rz: "",
-    vx: "",
-    vy: "",
-    vz: "",
-    mass: ""
+    rx: rx,
+    ry: ry,
+    rz: rz,
+    vx: vx,
+    vy: vy,
+    vz: vz,
+    Mass: mass 
   }
 
   // instnatiate new dat GUI
@@ -479,44 +484,41 @@ function createUI() {
 
   // gui folder animation controls
   var anim = gui.addFolder('Animation');
-  anim.add(options, 'start/stop');
-  anim.add(options, 'reset');
-
-  // Toggle vectors
-  var vectorToggler = anim.add(options, 'checkboxVectors').name('Display Vectors').listen();
-  vectorToggler.onChange((checked) => {
-    checked ?
-      arrowList.forEach(e => e.visible = true) :
-      arrowList.forEach(e => e.visible = false)
-    scene.updateMatrixWorld();
-  });
+  anim.add(options, 'Play / Pause');
+  anim.add(options, 'Reset');
 
   // folder edit bodies controls
-  var edit = gui.addFolder('Edit');
-  edit.add(input, "rx").onFinishChange((val) =>
+  var edit = gui.addFolder('Bodies');
+
+  var position = edit.addFolder('Position');
+  position.add(input, "rx").name('x').onFinishChange((val) =>
     rx = val
   );
-  edit.add(input, "ry").onFinishChange((val) =>
+  position.add(input, "ry").name('y').onFinishChange((val) =>
     ry = val
   );
-  edit.add(input, "rz").onFinishChange((val) =>
+  position.add(input, "rz").name('z').onFinishChange((val) =>
     rz = val
   );
-  edit.add(input, "vx").onFinishChange((val) =>
+
+  var velocity = edit.addFolder('Velocity');
+  velocity.add(input, "vx").name('x').onFinishChange((val) =>
     vx = val
   );
-  edit.add(input, "vy").onFinishChange((val) =>
+  velocity.add(input, "vy").name('y').onFinishChange((val) =>
     vy = val
   );
-  edit.add(input, "vz").onFinishChange((val) =>
+  velocity.add(input, "vz").name('z').onFinishChange((val) =>
     vz = val
   );
-  edit.add(input, "mass").onFinishChange((val) =>
-    mass = val
-  );
 
-  edit.add(options, 'addBody');
-  edit.add(options, 'removeBody');
+  edit.add(input, "Mass").min(0.2).max(10).step(0.2).onFinishChange(val => mass = val);
+  // edit.add(input, "Mass").onFinishChange((val) =>
+  //   mass = val
+  // );
+
+  edit.add(options, 'Add body');
+  edit.add(options, 'Remove body');
 
   function rayCast(event) {
 
@@ -588,10 +590,9 @@ function createScene(canvas) {
 }
 
 function resetSimulation() {
-  simulate = true;
-  toggleSimulation();
+  simulate = false;
   camera.position.set(0, 5, 18);
-  let v = new Vector3(0,0,0)
+  let v = new Vector3();
   camera.lookAt(v);
   console.log(camera);
 

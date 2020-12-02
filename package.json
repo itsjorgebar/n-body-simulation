@@ -2,7 +2,7 @@
   "name": "nbody",
   "version": "1.0.0",
   "description": "NBody problem visualization",
-  "main": "config.js",
+  "main": "js/app.js",
   "dependencies": {
     "dat.gui": "^0.7.7",
     "jquery": "^3.5.1",
@@ -17,7 +17,7 @@
     "browserify": "^17.0.0"
   },
   "scripts": {
-    "build": "browserify app.js -o bundle.js",
+    "build": "browserify js/app.js -o js/bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -27,7 +27,7 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/JorgeBarMza/NBody/issues"
+    "url": "https://github.com/JorgeBarMza/n-body-simulation/issues"
   },
-  "homepage": "https://github.com/JorgeBarMza/NBody#readme"
+  "homepage": "https://github.com/JorgeBarMza/n-body-simulation#readme"
 }
