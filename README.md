@@ -30,7 +30,7 @@
     <img src="assets/flammarion_engraving.jpg" alt="Logo" width="385" height="300">
   </a>
 
-  <h3 align="center">n-body simulation</h3>
+  <h3 align="center"><i>n</i>-body simulation</h3>
 
   <p align="center">
     A 3D web app to visualize celestial mechanics.
@@ -85,7 +85,7 @@ An interactive 3D web app that simulates a dynamical system of particles under t
 
 ### Math
 
-The n-body problem consists of predicting the movement of n particles given their masses, initial positions, and velocities.
+The *n*-body problem consists of predicting the movement of *n* particles given their masses, initial positions, and velocities.
 
 Movement is influenced by gravitational force between the particles. 
 The force exerted from mass *j* and received by mass *i* is described by Newton's law of gravity:
