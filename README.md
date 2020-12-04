@@ -52,6 +52,7 @@
       <ul>
         <li><a href="#built-with">Built With</a></li>
         <li><a href="#math">Math</a></li>
+        <li><a href="#graphics">Graphics</a></li>
       </ul>
     </li>
     <li>
@@ -82,7 +83,34 @@ An interactive 3D web app that simulates a dynamical system of particles under t
 * [ThreeDatGUI](https://www.npmjs.com/package/three-dat.gui)
 * [ThreeMeshLine](https://www.npmjs.com/package/three.meshline)
 
-### THREE
+### Math
+
+The n-body problem consists of predicting the movement of n particles given their masses, initial positions, and velocities.
+
+Movement is influenced by gravitational force between the particles. 
+The force exerted from mass *j* and received by mass *i* is described by Newton's law of gravity:
+
+![](https://latex.codecogs.com/svg.latex?\large&space;F_{ij}=\frac{Gm_im_j}{{\|&space;r_j&space;-&space;r_i&space;\|}^2}&space;\cdot&space;\frac{(r_j&space;-&space;r_i)}{\|&space;r_j&space;-&space;r_i&space;\|}&space;=&space;\frac{Gm_im_j(r_j-r_i)}{{\|&space;r_j&space;-&space;r_i&space;\|}^3})
+
+Where *G* is the gravitational constant, *r* is the position vector of a body as a function of time, and |v| denotes the euclidean norm. 
+
+By Newton's second law, we associate the sum all forces affecting a body with its acceleration.
+
+![](https://latex.codecogs.com/svg.latex?\large&space;m_i&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;F_{ij})
+
+After substitution and simplification, we obtain a system of second order ODEs, one equation per body.
+
+![](https://latex.codecogs.com/svg.latex?\large&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
+
+Where each second order equation can be transformed into two first order ODEs.
+
+![](https://latex.codecogs.com/svg.latex?\large&space;v_i'&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
+
+![](https://latex.codecogs.com/svg.latex?\large&space;r_i'&space;=&space;v_i)
+
+Hence, each body yields two vector equations, or six scalar equations in a 3D coordinate system. The numerical solver integrates this system to obtain the velocity and position of all bodies as a function of time.  
+
+### Graphics
 This project uses Three.js, a JavaScript API that expands on WebGL's engine and functionalities to create and display animated 3d graphics. You can find more information on [Three.js](https://threejs.org/).
 
 We used the Three.js object constructors to create the scene, the lights, camera, trails, controls and post-processing effects. Which are readily available to use as part of the API.
@@ -156,33 +184,6 @@ The trail mesh contains the geometry and material of the trail, which is compose
 trailList[i].trail_line.advance(body.mesh.position);
 ```
 To give the trail movement, the trail vertices position values need to be updated according to the particle is attached. The new position values of the particles are pushed with the function that can be seen above. This function works like a queue that updates the position values of the vertices and using FIFO the vertices are deleted, so the oldest one that was updated is deleted and the new one is pushed infront
-
-### Math
-
-The n-body problem consists of predicting the movement of n particles given their masses, initial positions, and velocities.
-
-Movement is influenced by gravitational force between the particles. 
-The force exerted from mass *j* and received by mass *i* is described by Newton's law of gravity:
-
-![](https://latex.codecogs.com/svg.latex?\large&space;F_{ij}=\frac{Gm_im_j}{{\|&space;r_j&space;-&space;r_i&space;\|}^2}&space;\cdot&space;\frac{(r_j&space;-&space;r_i)}{\|&space;r_j&space;-&space;r_i&space;\|}&space;=&space;\frac{Gm_im_j(r_j-r_i)}{{\|&space;r_j&space;-&space;r_i&space;\|}^3})
-
-Where *G* is the gravitational constant, *r* is the position vector of a body as a function of time, and |v| denotes the euclidean norm. 
-
-By Newton's second law, we associate the sum all forces affecting a body with its acceleration.
-
-![](https://latex.codecogs.com/svg.latex?\large&space;m_i&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;F_{ij})
-
-After substitution and simplification, we obtain a system of second order ODEs, one equation per body.
-
-![](https://latex.codecogs.com/svg.latex?\large&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
-
-Where each second order equation can be transformed into two first order ODEs.
-
-![](https://latex.codecogs.com/svg.latex?\large&space;v_i'&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
-
-![](https://latex.codecogs.com/svg.latex?\large&space;r_i'&space;=&space;v_i)
-
-Hence, each body yields two vector equations, or six scalar equations in a 3D coordinate system. The numerical solver inegrates this system to obtain the velocity and position of all bodies as a function of time.  
 
 ## Getting Started
 
