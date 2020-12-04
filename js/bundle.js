@@ -600,7 +600,6 @@ function resetSimulation() {
   let y0 = createBodies();
   solve(y0);
 }
-
 },{"dat.gui":2,"jquery":3,"odex":4,"postprocessing":5,"three":9,"three-dat.gui":6,"three-orbit-controls":7,"three.meshline":8}],2:[function(require,module,exports){
 /**
  * dat-gui JavaScript Controller Library

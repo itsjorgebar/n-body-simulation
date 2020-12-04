@@ -27,7 +27,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/JorgeBarMza/n-body-simulation">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="assets/flammarion_engraving.jpg" alt="Logo" width="385" height="300">
   </a>
 
   <h3 align="center">n-body simulation</h3>
