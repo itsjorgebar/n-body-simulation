@@ -150,13 +150,13 @@ class Trail {
       // Create the line material
       this.trail_material = new MeshLineMaterial( {
           color: colour,
-          opacity: 0.5,
           resolution: resolution,
           sizeAttenuation: 1,
           lineWidth: 0.2,
-          depthTest: false,
+          depthTest: true,                    // Set to true they will set an overlay in th objects
           blending: THREE.AdditiveBlending,
           transparent: false,
+          opacity: 0.85,
           side: THREE.DoubleSide
       });
       this.trail_mesh = new THREE.Mesh( this.trail_line.geometry, this.trail_material ); 
