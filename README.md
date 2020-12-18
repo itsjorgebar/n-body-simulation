@@ -35,7 +35,7 @@
   <p align="center">
     A 3D web app to visualize celestial mechanics.
     <br />
-    <a href="https://github.com/JorgeBarMza/n-body-simulation">View Demo</a>
+    <a href="https://jorgebarmza.github.io/n-body-simulation/">View Demo</a>
     ·
     <a href="https://github.com/JorgeBarMza/n-body-simulation/issues">Report Bug or Request Feature</a>
   </p>
