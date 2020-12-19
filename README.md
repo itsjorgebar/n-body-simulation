@@ -84,6 +84,16 @@ An interactive 3D web app that simulates a dynamical system of particles under t
 * [ThreeMeshLine](https://www.npmjs.com/package/three.meshline)
 
 ### Math
+<!-- 
+Latex
+F_{ij}=\frac{Gm_im_j}{{\| r_j - r_i \|}^2} \cdot 
+\frac{(r_j - r_i)}{\| r_j - r_i \|} = 
+\frac{Gm_im_j(r_j-r_i)}{{\| r_j - r_i \|}^3}
+
+m_i {r_i}'' = \sum_{\substack{j = 1 \\ j \ne i}}^n F_{ij}
+
+{r_i}'' = \sum_{\substack{j = 1 \\ j \ne i}}^n \frac{Gm_j(r_j-r_i)}{{\| r_j-r_i \|}^3}
+-->
 
 The *n*-body problem consists of predicting the movement of *n* particles given their masses, initial positions, and velocities.
 
