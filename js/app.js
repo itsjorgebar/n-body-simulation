@@ -291,6 +291,12 @@ function setupScene(canvas) {
       console.log( Math.round(percentComplete, 2) + '% downloaded' );
     }
   };
+
+  // Load texture
+  // Source: https://wwwtyro.github.io/space-3d
+  // Seed: 2rkvxga2jhy0
+  // Field of view: 50
+  // Resolution: 1024
   const loader = new THREE.CubeTextureLoader();
   const texture = loader.load([
     'assets/skybox/right.png',
