@@ -292,6 +292,12 @@ function setupScene(canvas) {
       console.log( Math.round(percentComplete, 2) + '% downloaded' );
     }
   };
+
+  // Load texture
+  // Source: https://wwwtyro.github.io/space-3d
+  // Seed: 2rkvxga2jhy0
+  // Field of view: 50
+  // Resolution: 1024
   const loader = new THREE.CubeTextureLoader();
   const texture = loader.load([
     'assets/skybox/right.png',
@@ -536,7 +542,8 @@ function createUI() {
       if (object !== undefined) {
         selectedObject = object;
         handleSelection();
-      }
+      } 
+      
     }
   }
 
@@ -544,24 +551,32 @@ function createUI() {
     const selection = effect.selection;
 
     // avoid highlight arrows
-    selection.clear();
     if (selectedObject !== null && selectedObject.children.length > 0) {
-      selection.size > 0 ?
-        selection.clear() : selection.add(selectedObject)
-
-    } else {
+    /*
+     if(selection.size==0){
+       selection.add(selectedObject);
+     } else {
+       selection.clear();
+       selection.add(selectedObject);
+     }
+     */
+    if(selection.size!=0){
       selection.clear();
     }
+    selection.add(selectedObject);
+    } 
   }
 
   // handle 
   renderer.domElement.addEventListener("pointermove", () => {
     if (simulate) {
       rayCast(event);
+      
     }
   });
 
   renderer.domElement.addEventListener("mousedown", (event) => {
+    
     event.preventDefault();
     const mouse = new Vector2();
     mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;

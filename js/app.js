@@ -541,7 +541,8 @@ function createUI() {
       if (object !== undefined) {
         selectedObject = object;
         handleSelection();
-      }
+      } 
+      
     }
   }
 
@@ -549,24 +550,32 @@ function createUI() {
     const selection = effect.selection;
 
     // avoid highlight arrows
-    selection.clear();
     if (selectedObject !== null && selectedObject.children.length > 0) {
-      selection.size > 0 ?
-        selection.clear() : selection.add(selectedObject)
-
-    } else {
+    /*
+     if(selection.size==0){
+       selection.add(selectedObject);
+     } else {
+       selection.clear();
+       selection.add(selectedObject);
+     }
+     */
+    if(selection.size!=0){
       selection.clear();
     }
+    selection.add(selectedObject);
+    } 
   }
 
   // handle 
   renderer.domElement.addEventListener("pointermove", () => {
     if (simulate) {
       rayCast(event);
+      
     }
   });
 
   renderer.domElement.addEventListener("mousedown", (event) => {
+    
     event.preventDefault();
     const mouse = new Vector2();
     mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
