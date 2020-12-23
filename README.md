@@ -241,7 +241,7 @@ Jorge Barrios - jorgebarmza@gmail.com
 
 Roberto Alejandro Gutierrez - rgtzgn@gmail.com
 
-Eduardo Barrios - a01020716@itesm.mx
+Eduardo Badillo Álvarez - a01020716@itesm.mx
 
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements

@@ -278,7 +278,7 @@ function run() {
   }
 }
 
-// Define and dipslay basic scene in the canvas.
+// Define and display basic scene in the canvas.
 function setupScene(canvas) {
   renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -551,18 +551,10 @@ function createUI() {
 
     // avoid highlight arrows
     if (selectedObject !== null && selectedObject.children.length > 0) {
-    /*
-     if(selection.size==0){
-       selection.add(selectedObject);
-     } else {
-       selection.clear();
-       selection.add(selectedObject);
-     }
-     */
-    if(selection.size!=0){
-      selection.clear();
-    }
-    selection.add(selectedObject);
+      if(selection.size!=0){
+        selection.clear();
+      }
+      selection.add(selectedObject);
     } 
   }
 
@@ -606,11 +598,11 @@ function createScene(canvas) {
 
 function resetSimulation() {
   simulate = false;
+  // reset camera and controls to point to 0,0,0
   camera.position.set(0, 5, 18);
   let v = new Vector3();
   camera.lookAt(v);
-  console.log(camera);
-
+  orbitControls.target = v;
   let y0 = createBodies();
   solve(y0);
 }
