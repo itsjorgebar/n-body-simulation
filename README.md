@@ -95,7 +95,7 @@ m_i {r_i}'' = \sum_{\substack{j = 1 \\ j \ne i}}^n F_{ij}
 {r_i}'' = \sum_{\substack{j = 1 \\ j \ne i}}^n \frac{Gm_j(r_j-r_i)}{{\| r_j-r_i \|}^3}
 -->
 
-The *n*-body problem consists of predicting the movement of *n* particles given their masses, initial positions, and velocities.
+The *n*-body problem consists of predicting the movement of *n* particles given their masses, initial positions, and initial velocities.
 
 Movement is influenced by gravitational force between the particles. 
 The force exerted from mass *j* and received by mass *i* is described by Newton's law of gravity:
@@ -246,7 +246,7 @@ Eduardo Badillo Álvarez - a01020716@itesm.mx
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
-Thanks [Octavio Navarro](https://github.com/octavio-navarro) for providing valuable guidance and advice.
+Thanks [Octavio Navarro](https://github.com/octavio-navarro), and [Gerardo Pioquinto](https://www.remef.org.mx/index.php/primera/search/authors/view?firstName=Gerardo&middleName=Pioquinto&lastName=Aguilar%20S%C3%A1nchez&affiliation=Departamento%20de%20Matem%C3%A1ticas%20Tecnol%C3%B3gico%20de%20Monterrey%2C%20Campus%20Ciudad%20de%20M%C3%A9xico&country=) for providing valuable guidance and advice.
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
