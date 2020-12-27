@@ -246,7 +246,7 @@ Eduardo Badillo Álvarez - a01020716@itesm.mx
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
-Thanks [Octavio Navarro](https://github.com/octavio-navarro), and [Gerardo Pioquinto](https://www.remef.org.mx/index.php/primera/search/authors/view?firstName=Gerardo&middleName=Pioquinto&lastName=Aguilar%20S%C3%A1nchez&affiliation=Departamento%20de%20Matem%C3%A1ticas%20Tecnol%C3%B3gico%20de%20Monterrey%2C%20Campus%20Ciudad%20de%20M%C3%A9xico&country=) for providing valuable guidance and advice.
+Thanks [Octavio Navarro](https://github.com/octavio-navarro) and [Gerardo Pioquinto](https://www.remef.org.mx/index.php/primera/search/authors/view?firstName=Gerardo&middleName=Pioquinto&lastName=Aguilar%20S%C3%A1nchez&affiliation=Departamento%20de%20Matem%C3%A1ticas%20Tecnol%C3%B3gico%20de%20Monterrey%2C%20Campus%20Ciudad%20de%20M%C3%A9xico&country=) for providing valuable guidance and advice.
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
