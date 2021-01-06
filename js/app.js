@@ -411,7 +411,7 @@ function createBodies() {
 }
 
 function createUI() {
-  let rx = "0", ry = "0", rz = "0", vx = "1", vy = "1", vz = "0", mass = 1;
+  let rx = "0", ry = "0", rz = "-3", vx = "1", vy = "1", vz = "1", mass = 1;
   
   function addbody() {
     if (mass && rx && ry && rz && vx && vy && vz) {

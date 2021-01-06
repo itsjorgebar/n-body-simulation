@@ -412,7 +412,7 @@ function createBodies() {
 }
 
 function createUI() {
-  let rx = "0", ry = "0", rz = "0", vx = "1", vy = "1", vz = "0", mass = 1;
+  let rx = "0", ry = "0", rz = "-3", vx = "1", vy = "1", vz = "1", mass = 1;
   
   function addbody() {
     if (mass && rx && ry && rz && vx && vy && vz) {
@@ -599,12 +599,11 @@ function createScene(canvas) {
 
 function resetSimulation() {
   simulate = false;
+  // reset camera and controls to point to 0,0,0
   camera.position.set(0, 5, 18);
   let v = new Vector3();
   camera.lookAt(v);
   orbitControls.target = v;
-  console.log(camera);
-
   let y0 = createBodies();
   solve(y0);
 }
