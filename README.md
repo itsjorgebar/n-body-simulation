@@ -83,6 +83,18 @@ An interactive 3D web app that simulates a dynamical system of particles under t
 * [ThreeDatGUI](https://www.npmjs.com/package/three-dat.gui)
 * [ThreeMeshLine](https://www.npmjs.com/package/three.meshline)
 
+### Demo Captures
+
+<p align="center">
+<img width="1238" alt="Screen Shot 2022-10-28 at 3 23 53 PM" src="https://user-images.githubusercontent.com/14807193/198745339-1ab15950-27fb-4334-92aa-293caf8ff5c6.png">
+<p/>
+
+<p align="center">
+<img width="670" alt="Screen Shot 2022-10-28 at 3 26 39 PM" src="https://user-images.githubusercontent.com/14807193/198745264-cc923634-3b1d-46f6-b925-c6d030f29b76.png">
+</p>
+
+Periodic configuration.
+Chaotic state with velocity vectors.
 ### Math
 <!-- 
 Latex
