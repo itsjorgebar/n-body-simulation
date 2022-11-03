@@ -273,10 +273,7 @@ Thanks [Octavio Navarro](https://github.com/octavio-navarro) and [Gerardo Pioqui
 [contributors-url]: https://github.com/JorgeBarMza/n-body-simulation/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [forks-url]: https://github.com/JorgeBarMza/n-body-simulation/network/members
-[stars-shield]: https://img.shields.io/github/stars/JorgeBarMza/n-body-simulation.
-
-
-?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [stars-url]: https://github.com/JorgeBarMza/n-body-simulation/stargazers
 [issues-shield]: https://img.shields.io/github/issues/JorgeBarMza/n-body-simulation.svg?style=for-the-badge
 [issues-url]: https://github.com/JorgeBarMza/n-body-simulation/issues
