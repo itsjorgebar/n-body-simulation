@@ -118,23 +118,23 @@ The *n*-body problem consists of predicting the movement of *n* particles given 
 Movement is influenced by gravitational force between the particles. 
 The force exerted from mass *j* and received by mass *i* is described by Newton's law of gravity:
 
-![](https://latex.codecogs.com/svg.latex?\large&space;F_{ij}=\frac{Gm_im_j}{{\|&space;r_j&space;-&space;r_i&space;\|}^2}&space;\cdot&space;\frac{(r_j&space;-&space;r_i)}{\|&space;r_j&space;-&space;r_i&space;\|}&space;=&space;\frac{Gm_im_j(r_j-r_i)}{{\|&space;r_j&space;-&space;r_i&space;\|}^3})
+![](https://latex.codecogs.com/svg.image?\large&space;\bg{white}F_{ij}=\frac{Gm_im_j}{{\|&space;r_j&space;-&space;r_i&space;\|}^2}&space;\cdot&space;\frac{(r_j&space;-&space;r_i)}{\|&space;r_j&space;-&space;r_i&space;\|}&space;=&space;\frac{Gm_im_j(r_j-r_i)}{{\|&space;r_j&space;-&space;r_i&space;\|}^3})
 
 Where *G* is the gravitational constant, *r* is the position vector of a body as a function of time, and |v| denotes the euclidean norm. 
 
 By Newton's second law, we associate the sum all forces affecting a body with its acceleration.
 
-![](https://latex.codecogs.com/svg.latex?\large&space;m_i&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;F_{ij})
+![](https://latex.codecogs.com/svg.image?\large&space;\bg{white}m_i&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;F_{ij})
 
 After substitution and simplification, we obtain a system of second order ODEs, one equation per body.
 
-![](https://latex.codecogs.com/svg.latex?\large&space;{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
+![](https://latex.codecogs.com/svg.image?\large&space;\bg{white}{r_i}''&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
 
 Where each second order equation can be transformed into two first order ODEs.
 
-![](https://latex.codecogs.com/svg.latex?\large&space;v_i'&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
+![](https://latex.codecogs.com/svg.image?\large&space;\bg{white}v_i'&space;=&space;\sum_{\substack{j&space;=&space;1&space;\\&space;j&space;\ne&space;i}}^n&space;\frac{Gm_j(r_j-r_i)}{{\|&space;r_j-r_i&space;\|}^3})
 
-![](https://latex.codecogs.com/svg.latex?\large&space;r_i'&space;=&space;v_i)
+![](https://latex.codecogs.com/svg.image?\large&space;\bg{white}r_i'&space;=&space;v_i)
 
 Hence, each body yields two vector equations, or six scalar equations in a 3D coordinate system. The numerical solver integrates this system to obtain the velocity and position of all bodies as a function of time.  
 
